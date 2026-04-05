@@ -1,0 +1,1677 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>量子隧穿仿真</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background: #f0f4f8;
+            color: #2c3e50;
+            padding: 30px 20px;
+        }
+        .container {
+            position: relative;
+            max-width: 1200px;
+            margin: 0 auto;
+            background: #ffffff;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.06);
+        }
+        h1 {
+            text-align: center;
+            font-size: 28px;
+            margin-bottom: 25px;
+            font-weight: 600;
+            color: #1a202c;
+            letter-spacing: 0.5px;
+        }
+        .main-layout {
+            display: flex;
+            gap: 30px;
+            align-items: flex-start;
+        }
+        .left-panel {
+            flex: 1;
+            min-width: 0;
+        }
+        .right-panel {
+            width: 340px;
+            flex-shrink: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        .canvas-container {
+            position: relative;
+            margin-bottom: 15px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            overflow: hidden;
+            background: #f8fafc;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);
+        }
+        canvas {
+            display: block;
+            width: 100%;
+        }
+        .canvas-label {
+            position: absolute;
+            top: 12px;
+            left: 12px;
+            font-size: 13px;
+            font-weight: 500;
+            color: #4a5568;
+            pointer-events: none;
+            background: rgba(255,255,255,0.85);
+            padding: 4px 8px;
+            border-radius: 6px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        
+        /* 测量交互提示文本 */
+        #measureOverlayText {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 24px;
+            font-weight: bold;
+            color: rgba(229, 62, 62, 0.9);
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.5s;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            z-index: 10;
+            background: rgba(255,255,255,0.8);
+            padding: 10px 20px;
+            border-radius: 8px;
+            border: 2px solid rgba(229, 62, 62, 0.5);
+        }
+
+        .controls {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            background: #f8fafc;
+            padding: 20px;
+            border-radius: 10px;
+            border: 1px solid #e2e8f0;
+            margin: 0;
+        }
+        .control-group {
+            display: flex;
+            flex-direction: column;
+        }
+        .control-group label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 13px;
+            font-weight: 500;
+            margin-bottom: 8px;
+            color: #4a5568;
+        }
+        .control-group label span {
+            font-weight: 600;
+            color: #3182ce;
+            background: #ebf8ff;
+            padding: 2px 6px;
+            border-radius: 12px;
+            font-size: 12px;
+        }
+        input[type="range"] {
+            width: 100%;
+            cursor: pointer;
+            height: 6px;
+            background: #cbd5e0;
+            border-radius: 3px;
+            outline: none;
+            -webkit-appearance: none;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 16px;
+            height: 16px;
+            background: #3182ce;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: transform 0.1s;
+        }
+        input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.15);
+        }
+        .results {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            background: linear-gradient(135deg, #ebf8ff 0%, #e6fffa 100%);
+            padding: 15px;
+            border-radius: 10px;
+            border: 1px solid #bee3f8;
+            font-size: 14px;
+            color: #2c5282;
+            box-shadow: 0 2px 8px rgba(49, 130, 206, 0.1);
+            margin: 0;
+        }
+        .results div {
+            text-align: center;
+            font-weight: 500;
+        }
+        .results span {
+            display: block;
+            margin-top: 5px;
+            font-weight: 700;
+            color: #2b6cb0;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            font-size: 22px;
+            background: #fff;
+            padding: 4px 15px;
+            border-radius: 8px;
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.05);
+        }
+        .btn-group {
+            display: flex;
+            justify-content: space-between;
+            gap: 15px;
+            margin: 0;
+        }
+        button {
+            flex: 1;
+            padding: 12px 0;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            background: #fff;
+            color: #4a5568;
+            border: 1px solid #cbd5e0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.04);
+            transition: all 0.2s ease;
+        }
+        button:hover {
+            background: #f7fafc;
+            border-color: #a0aec0;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.06);
+        }
+        button:active {
+            transform: translateY(0);
+            box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+        }
+        button#playPauseBtn {
+            background: #3182ce;
+            color: #fff;
+            border-color: #2b6cb0;
+            box-shadow: 0 2px 4px rgba(49, 130, 206, 0.3);
+        }
+        button#playPauseBtn:hover {
+            background: #2b6cb0;
+            box-shadow: 0 4px 8px rgba(49, 130, 206, 0.4);
+        }
+        button#playPauseBtn:active {
+            transform: translateY(0);
+            box-shadow: 0 1px 2px rgba(49, 130, 206, 0.4);
+        }
+
+        /* --- 黑夜模式样式 --- */
+        body.dark-mode {
+            background: #000000;
+            color: #e2e8f0;
+        }
+        body.dark-mode .container {
+            background: #000000;
+            box-shadow: 0 0 20px rgba(255,255,255,0.05);
+            border: 1px solid #333;
+        }
+        body.dark-mode h1 {
+            color: #f7fafc;
+        }
+        body.dark-mode .canvas-container {
+            background: #000000;
+            border-color: #333;
+            box-shadow: none;
+        }
+        body.dark-mode .canvas-label {
+            background: rgba(0, 0, 0, 0.85);
+            color: #e2e8f0;
+            border: 1px solid #333;
+        }
+        body.dark-mode .controls {
+            background: #0a0a0a;
+            border-color: #333;
+        }
+        body.dark-mode .control-group label {
+            color: #e2e8f0;
+        }
+        body.dark-mode .control-group label span {
+            background: #222;
+            color: #63b3ed;
+        }
+        body.dark-mode .results {
+            background: #0a0a0a;
+            border-color: #333;
+            color: #e2e8f0;
+        }
+        body.dark-mode .results div {
+            color: #e2e8f0 !important;
+        }
+        body.dark-mode .results span {
+            background: #000000;
+            color: #63b3ed;
+            box-shadow: none;
+            border: 1px solid #333;
+        }
+        body.dark-mode hr {
+            border-top-color: #333 !important;
+        }
+        body.dark-mode button {
+            background: #111;
+            color: #f7fafc;
+            border-color: #444;
+        }
+        body.dark-mode button:hover {
+            background: #222;
+            border-color: #666;
+        }
+        body.dark-mode button#playPauseBtn {
+            background: #2b6cb0;
+            border-color: #2c5282;
+            color: #fff;
+        }
+        body.dark-mode button#playPauseBtn:hover {
+            background: #3182ce;
+        }
+
+        #themeToggle {
+            position: absolute;
+            top: 25px;
+            right: 30px;
+            background: transparent;
+            border: none;
+            box-shadow: none;
+            font-size: 26px;
+            cursor: pointer;
+            padding: 0;
+            width: auto;
+            color: inherit;
+        }
+        #themeToggle:hover {
+            background: transparent;
+            transform: scale(1.15) translateY(-2px);
+            border: none;
+            box-shadow: none;
+        }
+        #themeToggle:active {
+            transform: scale(0.95);
+        }
+
+        /* --- 时间轴控制样式 --- */
+        .time-control {
+            background: #f8fafc;
+            padding: 15px;
+            border-radius: 10px;
+            border: 1px solid #e2e8f0;
+            margin: 0;
+        }
+        body.dark-mode .time-control {
+            background: #0a0a0a;
+            border-color: #333;
+        }
+        .time-label {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #2b6cb0;
+        }
+        body.dark-mode .time-label {
+            color: #63b3ed;
+        }
+        
+        /* --- Tabs & Chart --- */
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        .tab-btn {
+            padding: 8px 20px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            background: #e2e8f0;
+            color: #4a5568;
+            border: none;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+        }
+        .tab-btn:hover {
+            background: #cbd5e0;
+        }
+        .tab-btn.active {
+            background: #3182ce;
+            color: white;
+        }
+        body.dark-mode .tab-btn {
+            background: #2d3748;
+            color: #a0aec0;
+        }
+        body.dark-mode .tab-btn:hover {
+            background: #4a5568;
+        }
+        body.dark-mode .tab-btn.active {
+            background: #3182ce;
+            color: white;
+        }
+        .view-container {
+            display: none;
+            animation: fadeIn 0.3s;
+        }
+        .view-container.active {
+            display: block;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        .chart-controls {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 15px;
+            align-items: center;
+            background: #f8fafc;
+            padding: 10px 15px;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+        }
+        body.dark-mode .chart-controls {
+            background: #0a0a0a;
+            border-color: #333;
+        }
+        .chart-controls label {
+            font-size: 14px;
+            font-weight: 500;
+        }
+        .chart-controls select {
+            padding: 6px 12px;
+            border-radius: 6px;
+            border: 1px solid #cbd5e0;
+            background: #fff;
+            color: #2d3748;
+            outline: none;
+        }
+        body.dark-mode .chart-controls select {
+            background: #1a202c;
+            border-color: #4a5568;
+            color: #e2e8f0;
+        }
+        
+        /* --- 静态波互动控制样式 --- */
+        .static-controls {
+            background: #ebf8ff;
+            border: 1px solid #bee3f8;
+            padding: 12px 15px;
+            margin-bottom: 15px;
+            border-radius: 8px;
+            color: #2c5282;
+            transition: all 0.3s ease;
+        }
+        body.dark-mode .static-controls {
+            background: rgba(49, 130, 206, 0.1);
+            border-color: #2b6cb0;
+            color: #90cdf4;
+        }
+        .static-controls-title {
+            font-weight: 700;
+            margin-bottom: 10px;
+            font-size: 14.5px;
+            display: flex;
+            align-items: center;
+        }
+        .static-controls-options {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            font-size: 13.5px;
+            flex-wrap: wrap;
+        }
+        .static-controls-options label {
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-weight: 500;
+        }
+        .mode-desc {
+            margin-left: auto;
+            font-weight: 600;
+            color: #e53e3e;
+            background: rgba(255,255,255,0.7);
+            padding: 4px 10px;
+            border-radius: 6px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        }
+        body.dark-mode .mode-desc {
+            color: #fc8181;
+            background: rgba(0,0,0,0.4);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <button id="themeToggle" title="切换黑夜模式">🌙</button>
+        <h1>量子隧穿仿真</h1>
+        
+        <div class="main-layout">
+            <div class="left-panel">
+                <div class="tabs">
+                    <button class="tab-btn active" id="tabSim">实时演化</button>
+                    <button class="tab-btn" id="tabData">参数关系</button>
+                </div>
+                
+                <!-- 这些视图在两个Tab下都保持可见，方便观察实时演化 -->
+                <div class="canvas-container">
+                    <div class="canvas-label">总能量与势垒</div>
+                    <canvas id="energyCanvas" width="800" height="100"></canvas>
+                </div>
+                
+                <div id="viewSim" class="view-container active">
+                    <div class="canvas-container">
+                        <div class="canvas-label">波函数 Ψ(x,t) - 实部(蓝) & 虚部(红)</div>
+                        <canvas id="waveCanvas" width="800" height="220"></canvas>
+                    </div>
+                    <div class="canvas-container">
+                        <div class="canvas-label">概率密度 |Ψ(x,t)|²</div>
+                        <canvas id="densityCanvas" width="800" height="220"></canvas>
+                    </div>
+                    <div class="canvas-container">
+                        <div class="canvas-label">粒子模拟 (1000 粒子)</div>
+                        <canvas id="ensembleCanvas" width="800" height="120"></canvas>
+                    </div>
+                </div>
+
+                <div id="viewData" class="view-container">
+                    <div class="static-controls">
+                        <div class="static-controls-title">💡 为什么实部(蓝)/虚部(红)振幅不一样？</div>
+                        <div class="static-controls-options">
+                            <label><input type="radio" name="staticMode" value="total" checked> 1. 默认：总波 (驻波干涉)</label>
+                            <label><input type="radio" name="staticMode" value="incident"> 2. 剥离：右行波 (入射波+透射波)</label>
+                            <label><input type="radio" name="staticMode" value="reflected"> 3. 剥离：左行波 (反射波)</label>
+                            <span id="staticModeDesc" class="mode-desc">👈 驻波干涉：导致实虚部振幅不同，包络呈波浪起伏</span>
+                        </div>
+                        <div class="static-controls-options" style="margin-top: 12px; font-size: 13px; color: #4a5568; background: rgba(0,0,0,0.03); padding: 6px 12px; border-radius: 6px;">
+                            <span style="font-weight: bold; margin-right: 10px;">视图控制:</span>
+                            <label><input type="checkbox" id="showStaticReal" checked> 显示实部 (蓝线)</label>
+                            <label><input type="checkbox" id="showStaticImag" checked> 显示虚部 (红线)</label>
+                            <label><input type="checkbox" id="showStaticEnv" checked> 显示包络幅度 (虚线)</label>
+                        </div>
+                    </div>
+                    
+                    <div class="canvas-container">
+                        <div class="canvas-label">定态散射波函数 - 实部(蓝) & 虚部(红)</div>
+                        <canvas id="staticWaveCanvas" width="800" height="220"></canvas>
+                    </div>
+
+                    <div class="chart-controls">
+                        <label>横坐标 (自变量):</label>
+                        <select id="chartVarSelect">
+                            <option value="d">势垒宽度 d</option>
+                            <option value="E">粒子能量 E</option>
+                            <option value="V0">势垒高度 V₀</option>
+                        </select>
+                        <label style="margin-left: 15px;">Y轴缩放:</label>
+                        <select id="chartScaleSelect">
+                            <option value="log">对数 (Log) - 适合看指数衰减</option>
+                            <option value="linear">线性 (Linear)</option>
+                        </select>
+                    </div>
+                    <div class="canvas-container">
+                        <div class="canvas-label">理论透射率 T 关系曲线</div>
+                        <canvas id="chartCanvas" width="800" height="280"></canvas>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="right-panel">
+                <div class="time-control">
+                    <div class="time-label">演化时间 t = <span id="timeValueDisp">0.00</span> fs</div>
+                    <input type="range" id="timeSlider" min="0" max="2000" step="1" value="0">
+                </div>
+                <div class="btn-group">
+                    <button id="playPauseBtn">暂停</button>
+                    <button id="resetBtn">重置波包</button>
+                </div>
+
+                <div class="controls">
+                    <div class="control-group">
+                        <label>势垒高度 V₀ <span><span id="v0Value">2.0</span> eV</span></label>
+                        <input type="range" id="v0Slider" min="0.5" max="5.0" step="0.1" value="2.0">
+                    </div>
+                    <div class="control-group">
+                        <label>势垒宽度 d <span><span id="dValue">0.5</span> nm</span></label>
+                        <input type="range" id="dSlider" min="0.05" max="2.0" step="0.05" value="0.5">
+                    </div>
+                    <div class="control-group">
+                        <label>波包总能量 E <span><span id="eValue">1.5</span> eV</span></label>
+                        <input type="range" id="eSlider" min="0.5" max="4.0" step="0.1" value="1.5">
+                    </div>
+                    <div class="control-group">
+                        <label>波包初始宽度 σ <span><span id="sigmaValue">0.5</span> nm</span></label>
+                        <input type="range" id="sigmaSlider" min="0.2" max="2.0" step="0.1" value="0.5">
+                    </div>
+                </div>
+
+                <div class="results">
+                    <div style="color: #4a5568; font-size: 14px;">理论透射系数 T <br><span id="tValue" style="color: #718096; font-size: 18px;">0.0000</span></div>
+                    <hr style="border: 0; border-top: 1px dashed #cbd5e0; margin: 8px 0;">
+                    <div style="color: #4a5568; font-size: 14px;">理论反射系数 R <br><span id="rValue" style="color: #718096; font-size: 18px;">0.0000</span></div>
+                    <hr style="border: 0; border-top: 1px dashed #cbd5e0; margin: 8px 0;">
+                    <div style="color: #2b6cb0; font-size: 14px;">波包实际透射 (Wave Packet) <br><span id="actualTValue" style="font-size: 22px;">0.00%</span></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+    // --- 物理常数与计算设置 (完美匹配 PhET 原始参数) ---
+    // 采用与 PhET 完全一致的缩放单位:
+    // ℏ (hbar) = 0.658212 eV·fs
+    // m (mass) = 5.68563 eV·fs²/nm²
+    // x 的单位为 nm, E, V 的单位为 eV, t 的单位为 fs
+    
+    const N_visible = 800;
+    const N_damp = 190; // PhET 使用的 190 个隐藏阻尼网格
+    const N = N_visible + 2 * N_damp; // 总网格数 1180
+    
+    // 可视区域坐标
+    const xMinVisible = -15.0;
+    const xMaxVisible = 15.0;
+    const dx = (xMaxVisible - xMinVisible) / (N_visible - 1);
+    
+    // 物理网格实际的起始坐标 (包含隐藏阻尼区)
+    const xMin = xMinVisible - N_damp * dx;
+    const xMax = xMaxVisible + N_damp * dx;
+    
+    const hbar = 0.658212;
+    const mass = 5.68563;
+    
+    // Crank-Nicolson 的时间步长。
+    // PhET 使用的是 dt = 0.0025, steps = 40。
+    // 为了减慢动画，我们减小每次渲染的物理步数 (stepsPerFrame) 或者时间步长。
+    // 配合严谨的 PhET 常数，采用如下设置以达到平滑且不过快的动画：
+    const dt = 0.0025; 
+    const stepsPerFrame = 15; // PhET 默认是 40，调小可让动画"变慢一点"
+    
+    const MAX_FRAMES = 2000;
+    let stateHistory = [];
+    let currentFrame = 0;
+    let currentTime = 0.0;
+    
+    // 状态
+    let isPlaying = true;
+    let animationId = null;
+    
+    // UI Helpers
+    const isDark = () => document.body.classList.contains('dark-mode');
+    
+    // 仿真参数
+    let V0 = 2.0;
+    let d = 0.5;
+    let E = 1.5;
+    let sigma = 0.5;
+    const barrierCenter = 0.0;
+    
+    // 交互状态
+    // 数组
+    let psiRe = new Float64Array(N);
+    let psiIm = new Float64Array(N);
+    let V = new Float64Array(N);
+    
+    // 全局概率跟踪 (波包吸收)
+    let initialTotalProb = 1.0;
+    let absorbedLeft = 0.0;
+    let absorbedRight = 0.0;
+    
+    // Crank-Nicolson 算法的复数三对角矩阵追赶法 (Thomas Algorithm) 内部数组
+    let cRe = new Float64Array(N);
+    let cIm = new Float64Array(N);
+    let dRe = new Float64Array(N);
+    let dIm = new Float64Array(N);
+
+    // 复数运算辅助函数
+    function c_div(aRe, aIm, bRe, bIm) {
+        const denom = bRe * bRe + bIm * bIm;
+        return {
+            re: (aRe * bRe + aIm * bIm) / denom,
+            im: (aIm * bRe - aRe * bIm) / denom
+        };
+    }
+
+    function updatePotential() {
+        for (let i = 0; i < N; i++) {
+            const x = xMin + i * dx;
+            if (x >= barrierCenter - d / 2 && x <= barrierCenter + d / 2) {
+                V[i] = V0;
+            } else {
+                V[i] = 0;
+            }
+        }
+    }
+
+    function initSimulation() {
+        absorbedLeft = 0.0;
+        absorbedRight = 0.0;
+
+        // 波矢 k = sqrt(2mE) / hbar
+        const k0 = Math.sqrt(2 * mass * E) / hbar;
+        const x0 = -6.0; // 初始位置在势垒左侧，并且在吸收层之外
+        
+        updatePotential();
+        
+        for (let i = 0; i < N; i++) {
+            const x = xMin + i * dx;
+            
+            // 波包初始化 (根据 PhET 的无归一化高斯波包)
+            // 严谨不作 L2 归一化，强制振幅最大值为 1.0，从而完美适配界面缩放比例
+            const env = Math.exp(-Math.pow((x - x0) / sigma, 2) / 2.0);
+            const phase = k0 * (x - x0);
+            psiRe[i] = env * Math.cos(phase);
+            psiIm[i] = env * Math.sin(phase);
+        }
+
+        // 计算初始时刻的全局总概率（波包初始的质量）
+        initialTotalProb = 0;
+        for (let i = 0; i < N; i++) {
+            initialTotalProb += (psiRe[i]*psiRe[i] + psiIm[i]*psiIm[i]) * dx;
+        }
+
+        updateTheoreticalTR();
+        updateActualTR();
+        
+        stateHistory = [];
+        currentTime = 0.0;
+        currentFrame = 0;
+        saveState();
+        document.getElementById('timeSlider').value = 0;
+        document.getElementById('timeValueDisp').textContent = "0.00";
+    }
+
+    function saveState() {
+        stateHistory.push({
+            psiRe: new Float64Array(psiRe),
+            psiIm: new Float64Array(psiIm),
+            absorbedLeft: absorbedLeft,
+            absorbedRight: absorbedRight,
+            time: currentTime
+        });
+    }
+
+    function loadState(index) {
+        const state = stateHistory[index];
+        psiRe.set(state.psiRe);
+        psiIm.set(state.psiIm);
+        absorbedLeft = state.absorbedLeft;
+        absorbedRight = state.absorbedRight;
+        currentTime = state.time;
+        document.getElementById('timeValueDisp').textContent = currentTime.toFixed(2);
+        document.getElementById('timeSlider').value = index;
+    }
+
+    // Crank-Nicolson 算法实现 (更严谨的物理单位版)
+    function solveCrankNicolson() {
+        // 薛定谔方程: i*hbar dPsi/dt = (-hbar^2/(2m) d^2/dx^2 + V) Psi
+        // 离散化后的 H 操作符主对角线和副对角线:
+        // H * psi_old_i = (-hbar^2/(2m*dx^2)) * (psi_old_{i-1} - 2psi_old_i + psi_old_{i+1}) + V[i]*psi_old_i
+        
+        // 动能前缀常数: rx = hbar / (4 * mass * dx^2)
+        const rx = hbar / (4 * mass * dx * dx); 
+        
+        // 构造右侧向量 b
+        let bRe = new Float64Array(N);
+        let bIm = new Float64Array(N);
+        
+        for (let i = 1; i < N - 1; i++) {
+            // (H * psi_old)[i]
+            // 注意: -0.5 * (hbar^2/mass) d^2/dx^2 已经除以了 hbar，我们只需要计算 (H / hbar)
+            const kE_coef = -hbar / (2 * mass * dx * dx);
+            const H_psiRe = kE_coef * (psiRe[i-1] - 2*psiRe[i] + psiRe[i+1]) + (V[i] / hbar) * psiRe[i];
+            const H_psiIm = kE_coef * (psiIm[i-1] - 2*psiIm[i] + psiIm[i+1]) + (V[i] / hbar) * psiIm[i];
+            
+            // b = psi_old - i * (dt/2) * (H/hbar) * psi_old
+            bRe[i] = psiRe[i] + (dt / 2) * H_psiIm;
+            bIm[i] = psiIm[i] - (dt / 2) * H_psiRe;
+        }
+        
+        // 边界条件: psi = 0
+        bRe[0] = 0; bIm[0] = 0;
+        bRe[N-1] = 0; bIm[N-1] = 0;
+        
+        // Thomas 追赶法解三对角矩阵 A * psi_new = b
+        // A 的主对角线 D[i] = 1 + i * dt/2 * (hbar/(mass*dx^2) + V[i]/hbar)
+        // A 的上下副对角线 U[i] = L[i] = -i * dt/2 * (hbar/(2*mass*dx^2)) = -i * rx * dt
+        const rx_dt = rx * dt;
+        
+        // 预处理边界
+        cRe[0] = 0; cIm[0] = 0;
+        dRe[0] = 0; dIm[0] = 0;
+        
+        // 正向追
+        for (let i = 1; i < N - 1; i++) {
+            // D[i]
+            const DRe = 1.0;
+            const DIm = (dt / 2) * (hbar / (mass * dx * dx) + V[i] / hbar);
+            
+            // U[i] = -i * rx_dt
+            const URe = 0;
+            const UIm = -rx_dt;
+            
+            // L[i] = -i * rx_dt
+            const LRe = 0;
+            const LIm = -rx_dt;
+            
+            // L * c[i-1]
+            const LcRe = LRe * cRe[i-1] - LIm * cIm[i-1];
+            const LcIm = LRe * cIm[i-1] + LIm * cRe[i-1];
+            
+            const denomRe = DRe - LcRe;
+            const denomIm = DIm - LcIm;
+            
+            // c[i] = U[i] / denom
+            const c_res = c_div(URe, UIm, denomRe, denomIm);
+            cRe[i] = c_res.re;
+            cIm[i] = c_res.im;
+            
+            // b[i] - L[i] * d[i-1]
+            const LdRe = LRe * dRe[i-1] - LIm * dIm[i-1];
+            const LdIm = LRe * dIm[i-1] + LIm * dRe[i-1];
+            
+            const numRe = bRe[i] - LdRe;
+            const numIm = bIm[i] - LdIm;
+            
+            // d[i] = num / denom
+            const d_res = c_div(numRe, numIm, denomRe, denomIm);
+            dRe[i] = d_res.re;
+            dIm[i] = d_res.im;
+        }
+        
+        // 反向赶
+        psiRe[N-1] = 0;
+        psiIm[N-1] = 0;
+        for (let i = N - 2; i >= 1; i--) {
+            // psi[i] = d[i] - c[i] * psi[i+1]
+            const cpsiRe = cRe[i] * psiRe[i+1] - cIm[i] * psiIm[i+1];
+            const cpsiIm = cRe[i] * psiIm[i+1] + cIm[i] * psiRe[i+1];
+            
+            psiRe[i] = dRe[i] - cpsiRe;
+            psiIm[i] = dIm[i] - cpsiIm;
+        }
+        psiRe[0] = 0;
+        psiIm[0] = 0;
+        
+        // --- 严谨的 PhET 阶梯吸收边界层 (Damping Sponge) ---
+        // PhET 原始阻尼系数数组 (19 个区块)
+        const dampCoefs = [
+            0.001, 0.005, 0.01, 0.025, 0.05, 0.075, 0.1, 0.15, 0.3, 0.5,
+            0.7, 0.85, 0.9, 0.925, 0.95, 0.975, 0.99, 0.995, 0.999
+        ];
+        
+        // 左边界阻尼
+        for (let i = 0; i < dampCoefs.length * 10; i++) {
+            if (i >= N / 2) break;
+            const blockIndex = Math.floor(i / 10);
+            const factor = dampCoefs[blockIndex];
+            
+            const prob_before = (psiRe[i]*psiRe[i] + psiIm[i]*psiIm[i]) * dx;
+            psiRe[i] *= factor;
+            psiIm[i] *= factor;
+            const prob_after = (psiRe[i]*psiRe[i] + psiIm[i]*psiIm[i]) * dx;
+            absorbedLeft += (prob_before - prob_after);
+        }
+        
+        // 右边界阻尼
+        for (let i = 0; i < dampCoefs.length * 10; i++) {
+            if (N - 1 - i <= N / 2) break;
+            const blockIndex = Math.floor(i / 10);
+            const factor = dampCoefs[blockIndex];
+            
+            const idx = N - 1 - i;
+            const prob_before = (psiRe[idx]*psiRe[idx] + psiIm[idx]*psiIm[idx]) * dx;
+            psiRe[idx] *= factor;
+            psiIm[idx] *= factor;
+            const prob_after = (psiRe[idx]*psiRe[idx] + psiIm[idx]*psiIm[idx]) * dx;
+            absorbedRight += (prob_before - prob_after);
+        }
+    }
+
+    function calculateTR(e_val, v0_val, d_val) {
+        if (Math.abs(e_val - v0_val) < 1e-6) {
+            // 临界情况: E = V0 (通过洛必达法则求极限)
+            const term = (mass * v0_val * d_val * d_val) / (2 * hbar * hbar);
+            const T = 1.0 / (1.0 + term);
+            return { T, R: 1 - T };
+        } else if (e_val < v0_val) {
+            // 隧穿情况: E < V0
+            const k1 = Math.sqrt(2 * mass * e_val) / hbar;
+            const k2 = Math.sqrt(2 * mass * (v0_val - e_val)) / hbar;
+            const sinh_kd = Math.sinh(k2 * d_val);
+            const denom = 4 * k1 * k1 * k2 * k2 + (k1 * k1 + k2 * k2) * sinh_kd * sinh_kd;
+            const T = 4 * k1 * k1 * k2 * k2 / denom;
+            return { T, R: 1 - T };
+        } else {
+            // 势垒上方散射情况: E > V0 (量子力学中仍有反射!)
+            const k1 = Math.sqrt(2 * mass * e_val) / hbar;
+            const k2 = Math.sqrt(2 * mass * (e_val - v0_val)) / hbar;
+            const sin_kd = Math.sin(k2 * d_val);
+            // 公式: T = 1 / (1 + (V0^2 / (4E(E-V0))) * sin^2(k2 d))
+            const term = (v0_val * v0_val) / (4 * e_val * (e_val - v0_val));
+            const T = 1.0 / (1.0 + term * sin_kd * sin_kd);
+            return { T, R: 1 - T };
+        }
+    }
+
+    function computeTheoreticalTR() {
+        return calculateTR(E, V0, d);
+    }
+
+    function updateTheoreticalTR() {
+        const { T, R } = computeTheoreticalTR();
+        document.getElementById('tValue').textContent = T.toFixed(4);
+        document.getElementById('rValue').textContent = R.toFixed(4);
+    }
+
+    function updateActualTR() {
+        let pRightVisible = 0.0;
+        const bRightIndex = Math.ceil((barrierCenter + d / 2 - xMin) / dx);
+        
+        for (let i = bRightIndex; i < N; i++) {
+            pRightVisible += (psiRe[i] * psiRe[i] + psiIm[i] * psiIm[i]) * dx;
+        }
+        
+        // 实际透射 = 仍在画布右侧的波包 + 已经跑出画面右侧被海绵吸收掉的波包
+        let actualT = (pRightVisible + absorbedRight) / initialTotalProb;
+        
+        if (actualT < 0) actualT = 0;
+        if (actualT > 1) actualT = 1;
+        
+        document.getElementById('actualTValue').textContent = (actualT * 100).toFixed(2) + "%";
+    }
+
+    // --- 渲染逻辑 ---
+
+    function getCanvasX(x, width) {
+        // 渲染只截取可视化区域，屏蔽隐藏阻尼层
+        return (x - xMinVisible) / (xMaxVisible - xMinVisible) * width;
+    }
+
+    function renderEnergy(ctx, width, height) {
+        ctx.clearRect(0, 0, width, height);
+        
+        // 势垒区域
+        const bLeft = getCanvasX(barrierCenter - d/2, width);
+        const bRight = getCanvasX(barrierCenter + d/2, width);
+        
+        const yMaxEnergy = 5.0; // 能量坐标轴最大值
+        const padY = 20;
+        const plotH = height - padY * 2;
+        
+        function getEnergyY(energy) {
+            return height - padY - (energy / yMaxEnergy) * plotH;
+        }
+        
+        const yZero = getEnergyY(0);
+        
+        // 背景基线
+        ctx.strokeStyle = isDark() ? '#555' : '#aaa';
+        ctx.beginPath();
+        ctx.moveTo(0, yZero);
+        ctx.lineTo(width, yZero);
+        ctx.stroke();
+        
+        // 画势垒
+        const yV0 = getEnergyY(V0);
+        ctx.fillStyle = isDark() ? 'rgba(74, 222, 128, 0.2)' : 'rgba(0, 153, 0, 0.2)'; 
+        ctx.fillRect(bLeft, yV0, bRight - bLeft, yZero - yV0);
+        ctx.strokeStyle = isDark() ? '#4ade80' : 'rgb(0, 153, 0)';
+        ctx.strokeRect(bLeft, yV0, bRight - bLeft, yZero - yV0);
+        
+        // 画总能量线
+        const yE = getEnergyY(E);
+        ctx.strokeStyle = isDark() ? '#4ade80' : 'rgb(0, 204, 0)'; 
+        ctx.lineWidth = 2;
+        ctx.setLineDash([5, 5]);
+        ctx.beginPath();
+        ctx.moveTo(0, yE);
+        ctx.lineTo(width, yE);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        
+        // 标签
+        ctx.fillStyle = isDark() ? '#4ade80' : 'rgb(0, 153, 0)';
+        ctx.font = 'bold 13px Arial';
+        ctx.fillText('E = ' + E.toFixed(1) + ' eV', 15, yE - 8);
+        ctx.fillText('V₀ = ' + V0.toFixed(1) + ' eV', bLeft + 5, yV0 - 8);
+    }
+
+    function renderWave(ctx, width, height) {
+        ctx.clearRect(0, 0, width, height);
+
+        // 势垒底色
+        const bLeft = getCanvasX(barrierCenter - d/2, width);
+        const bRight = getCanvasX(barrierCenter + d/2, width);
+        ctx.fillStyle = isDark() ? 'rgba(74, 222, 128, 0.15)' : 'rgba(0, 153, 0, 0.1)';
+        ctx.fillRect(bLeft, 0, bRight - bLeft, height);
+        
+        // 轴
+        ctx.strokeStyle = isDark() ? '#555' : '#ccc';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(0, height/2);
+        ctx.lineTo(width, height/2);
+        ctx.stroke();
+        
+        // 画波函数实部 (不依赖宽度的固定比例)
+        // 因为我们取消了数学意义上的 L2 归一化，最大振幅被强制截断在 1.0，完美匹配 PhET
+        const maxExpectedAmp = 1.0;
+        const scale = (height * 0.45) / maxExpectedAmp; 
+        
+        // 波函数包络 (Envelope)
+        ctx.strokeStyle = isDark() ? 'rgba(255, 255, 255, 0.3)' : 'rgba(0, 0, 0, 0.2)'; 
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        for (let i = N_damp; i < N - N_damp; i++) {
+            const cx = getCanvasX(xMin + i*dx, width);
+            const env = Math.sqrt(psiRe[i]*psiRe[i] + psiIm[i]*psiIm[i]);
+            const cy = height/2 - env * scale;
+            if (i === N_damp) ctx.moveTo(cx, cy);
+            else ctx.lineTo(cx, cy);
+        }
+        for (let i = N - N_damp - 1; i >= N_damp; i--) {
+            const cx = getCanvasX(xMin + i*dx, width);
+            const env = Math.sqrt(psiRe[i]*psiRe[i] + psiIm[i]*psiIm[i]);
+            const cy = height/2 + env * scale;
+            ctx.lineTo(cx, cy);
+        }
+        ctx.stroke();
+
+        // 虚部 (Imaginary part)
+        ctx.strokeStyle = isDark() ? 'rgb(252, 129, 129)' : 'rgb(204, 0, 0)'; 
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        for (let i = N_damp; i < N - N_damp; i++) {
+            const cx = getCanvasX(xMin + i*dx, width);
+            const cy = height/2 - psiIm[i] * scale;
+            if (i === N_damp) ctx.moveTo(cx, cy);
+            else ctx.lineTo(cx, cy);
+        }
+        ctx.stroke();
+
+        // 真实部分
+        ctx.strokeStyle = isDark() ? 'rgb(99, 179, 237)' : 'rgb(0, 51, 204)'; 
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        for (let i = N_damp; i < N - N_damp; i++) {
+            const cx = getCanvasX(xMin + i*dx, width);
+            const cy = height/2 - psiRe[i] * scale;
+            if (i === N_damp) ctx.moveTo(cx, cy);
+            else ctx.lineTo(cx, cy);
+        }
+        ctx.stroke();
+    }
+
+    function renderDensity(ctx, width, height) {
+        ctx.clearRect(0, 0, width, height);
+        
+        // 势垒底色
+        const bLeft = getCanvasX(barrierCenter - d/2, width);
+        const bRight = getCanvasX(barrierCenter + d/2, width);
+        ctx.fillStyle = isDark() ? 'rgba(74, 222, 128, 0.15)' : 'rgba(0, 153, 0, 0.1)';
+        ctx.fillRect(bLeft, 0, bRight - bLeft, height);
+        
+        // 轴
+        const yBase = height - 15;
+        ctx.strokeStyle = isDark() ? '#555' : '#ccc';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(0, yBase);
+        ctx.lineTo(width, yBase);
+        ctx.stroke();
+        
+        // 概率密度固定比例
+        const maxExpectedProb = 1.0; 
+        const scale = (height * 0.8) / maxExpectedProb;
+        
+        ctx.fillStyle = 'rgba(255, 102, 0, 0.4)';
+        ctx.strokeStyle = 'rgb(255, 51, 0)';
+        ctx.lineWidth = 1.5;
+        
+        ctx.beginPath();
+        ctx.moveTo(getCanvasX(xMin + N_damp * dx, width), yBase);
+        for (let i = N_damp; i < N - N_damp; i++) {
+            const cx = getCanvasX(xMin + i*dx, width);
+            const prob = psiRe[i]*psiRe[i] + psiIm[i]*psiIm[i];
+            const cy = yBase - prob * scale;
+            ctx.lineTo(cx, cy);
+        }
+        ctx.lineTo(getCanvasX(xMin + (N - N_damp - 1) * dx, width), yBase);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+    }
+
+    function renderEnsemble(ctx, width, height) {
+        ctx.clearRect(0, 0, width, height);
+
+        // 背景
+        ctx.fillStyle = isDark() ? '#000000' : '#f8fafc';
+        ctx.fillRect(0, 0, width, height);
+
+        // 势垒底色
+        const bLeft = getCanvasX(barrierCenter - d/2, width);
+        const bRight = getCanvasX(barrierCenter + d/2, width);
+        ctx.fillStyle = isDark() ? 'rgba(74, 222, 128, 0.15)' : 'rgba(0, 153, 0, 0.1)';
+        ctx.fillRect(bLeft, 0, bRight - bLeft, height);
+
+        // 计算当前可见区域内的总概率
+        let cdf = new Float64Array(N);
+        let totalP = 0;
+        for(let i = N_damp; i < N - N_damp; i++) {
+            const p = (psiRe[i]*psiRe[i] + psiIm[i]*psiIm[i]) * dx;
+            totalP += p;
+            cdf[i] = totalP;
+        }
+
+        if (totalP <= 0 || initialTotalProb <= 0) return;
+
+        // 关键逻辑修复：当前留在画面里的粒子数量，正比于留在画面内的概率！
+        // 如果波包跑出画面被海绵层吸收了，粒子也应该随之减少消失。
+        let visibleRatio = totalP / initialTotalProb;
+        if (visibleRatio > 1.0) visibleRatio = 1.0;
+        
+        const NUM_PARTICLES = 1000;
+        const currentParticleCount = Math.floor(NUM_PARTICLES * visibleRatio);
+        
+        ctx.fillStyle = 'rgba(49, 130, 206, 0.6)'; // 蓝色粒子
+        
+        for (let p = 0; p < currentParticleCount; p++) {
+            let target = Math.random() * totalP;
+            
+            // 二分查找
+            let left = N_damp;
+            let right = N - N_damp - 1;
+            while (left < right) {
+                let mid = (left + right) >> 1;
+                if (cdf[mid] < target) {
+                    left = mid + 1;
+                } else {
+                    right = mid;
+                }
+            }
+            
+            const px = getCanvasX(xMin + left * dx, width);
+            const py = Math.random() * height; // Y轴随机散布，像云雾一样
+
+            ctx.beginPath();
+            ctx.arc(px, py, 1.2, 0, 2 * Math.PI);
+            
+            // 根据位置换颜色
+            if (xMin + left * dx > barrierCenter + d/2) {
+                ctx.fillStyle = 'rgba(72, 187, 120, 0.8)'; // 隧穿：绿色
+            } else if (xMin + left * dx < barrierCenter - d/2) {
+                ctx.fillStyle = 'rgba(49, 130, 206, 0.6)'; // 反射：蓝色
+            } else {
+                ctx.fillStyle = 'rgba(237, 137, 54, 0.8)'; // 势垒内：橙色
+            }
+            
+            ctx.fill();
+        }
+    }
+
+    function renderStaticWave() {
+        const canvas = document.getElementById('staticWaveCanvas');
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+        const width = canvas.width;
+        const height = canvas.height;
+        
+        ctx.clearRect(0, 0, width, height);
+
+        // 势垒底色
+        const bLeft = getCanvasX(barrierCenter - d/2, width);
+        const bRight = getCanvasX(barrierCenter + d/2, width);
+        ctx.fillStyle = isDark() ? 'rgba(74, 222, 128, 0.15)' : 'rgba(0, 153, 0, 0.1)';
+        ctx.fillRect(bLeft, 0, bRight - bLeft, height);
+        
+        // 中心基准轴
+        ctx.strokeStyle = isDark() ? '#555' : '#ccc';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(0, height/2);
+        ctx.lineTo(width, height/2);
+        ctx.stroke();
+
+        // Numerov法求解定态薛定谔方程 (Stationary State)
+        const N_stat = 1000; 
+        const dx_stat = (xMaxVisible - xMinVisible) / (N_stat - 1);
+        const h2 = dx_stat * dx_stat;
+        const k1 = Math.sqrt(2 * mass * E) / hbar;
+        
+        const f = new Float64Array(N_stat);
+        for(let i=0; i<N_stat; i++) {
+            const x = xMinVisible + i * dx_stat;
+            let V_x = 0;
+            if (x >= barrierCenter - d/2 && x <= barrierCenter + d/2) V_x = V0;
+            f[i] = (2 * mass / (hbar * hbar)) * (V_x - E);
+        }
+        
+        const phiR = new Float64Array(N_stat);
+        const phiI = new Float64Array(N_stat);
+        
+        // 从右向左积分 (右侧仅有透射波 e^{ikx})
+        phiR[N_stat-1] = Math.cos(k1 * (xMinVisible + (N_stat-1)*dx_stat));
+        phiI[N_stat-1] = Math.sin(k1 * (xMinVisible + (N_stat-1)*dx_stat));
+        phiR[N_stat-2] = Math.cos(k1 * (xMinVisible + (N_stat-2)*dx_stat));
+        phiI[N_stat-2] = Math.sin(k1 * (xMinVisible + (N_stat-2)*dx_stat));
+        
+        for (let i = N_stat - 2; i >= 1; i--) {
+            const c_prev = 1 - (h2 / 12) * f[i-1];
+            const c_curr = 2 + (5 * h2 / 6) * f[i];
+            const c_next = 1 - (h2 / 12) * f[i+1];
+            
+            phiR[i-1] = (c_curr * phiR[i] - c_next * phiR[i+1]) / c_prev;
+            phiI[i-1] = (c_curr * phiI[i] - c_next * phiI[i+1]) / c_prev;
+        }
+        
+        // 在左侧提取入射波振幅 A 并归一化，使得入射波振幅恒为 1.0
+        const x0 = xMinVisible;
+        const x1 = xMinVisible + dx_stat;
+        const c0 = Math.cos(k1 * x0), s0 = -Math.sin(k1 * x0);
+        const c1 = Math.cos(k1 * x1), s1 = -Math.sin(k1 * x1);
+        
+        const term1R = phiR[1]*c0 - phiI[1]*s0;
+        const term1I = phiR[1]*s0 + phiI[1]*c0;
+        const term0R = phiR[0]*c1 - phiI[0]*s1;
+        const term0I = phiR[0]*s1 + phiI[0]*c1;
+        
+        const NR = term1R - term0R;
+        const NI = term1I - term0I;
+        const denom = 2 * Math.sin(k1 * dx_stat);
+        
+        const AR = NI / denom;
+        const AI = -NR / denom;
+        const magA2 = AR*AR + AI*AI;
+        
+        // 解析选项模式
+        const modeInput = document.querySelector('input[name="staticMode"]:checked');
+        const mode = modeInput ? modeInput.value : 'total';
+        const descEl = document.getElementById('staticModeDesc');
+        if (mode === 'total') {
+            descEl.textContent = "👈 驻波干涉：导致实虚部振幅不同，包络呈波浪起伏";
+        } else if (mode === 'incident') {
+            descEl.textContent = "👈 右行波：注意势垒边界的波形断层！单独的行波无法在此平滑连续。";
+        } else if (mode === 'reflected') {
+            descEl.textContent = "👈 左行波：入射波与势垒内部波的断层，正是由这段左行反射波填补的！";
+        }
+        
+        const psiR = new Float64Array(N_stat);
+        const psiI = new Float64Array(N_stat);
+        const psiMag = new Float64Array(N_stat);
+        
+        // 第一遍计算找到总波函数，用于解析出分量波和统一缩放
+        const pR_tot = new Float64Array(N_stat);
+        const pI_tot = new Float64Array(N_stat);
+        let maxMagTotal = 0;
+        for(let i=0; i<N_stat; i++) {
+            pR_tot[i] = (phiR[i]*AR + phiI[i]*AI) / magA2;
+            pI_tot[i] = (phiI[i]*AR - phiR[i]*AI) / magA2;
+            const mag = Math.sqrt(pR_tot[i]*pR_tot[i] + pI_tot[i]*pI_tot[i]);
+            if (mag > maxMagTotal) maxMagTotal = mag;
+        }
+        
+        // 第二遍生成当前模式的数据（包含提取势垒内部的分量波）
+        for(let i=0; i<N_stat; i++) {
+            const x = xMinVisible + i * dx_stat;
+            let pR = pR_tot[i];
+            let pI = pI_tot[i];
+            
+            if (mode === 'incident') {
+                if (x <= barrierCenter - d/2) {
+                    pR = Math.cos(k1 * x);
+                    pI = Math.sin(k1 * x);
+                } else if (x >= barrierCenter + d/2) {
+                    // 势垒右侧只有透射波，保留总波
+                    pR = pR_tot[i]; 
+                    pI = pI_tot[i];
+                } else {
+                    // 势垒内部：使用局部空间导数剥离右行衰减波 (对应 exp(-kappa*x))
+                    let dpR = (pR_tot[i+1] - pR_tot[i-1]) / (2 * dx_stat);
+                    let dpI = (pI_tot[i+1] - pI_tot[i-1]) / (2 * dx_stat);
+                    let E_eff = E; if(Math.abs(E_eff - V0)<1e-6) E_eff += 1e-6;
+                    if (E_eff < V0) {
+                        const kappa = Math.sqrt(2 * mass * (V0 - E_eff)) / hbar;
+                        pR = 0.5 * (pR_tot[i] - dpR / kappa);
+                        pI = 0.5 * (pI_tot[i] - dpI / kappa);
+                    } else {
+                        const k = Math.sqrt(2 * mass * (E_eff - V0)) / hbar;
+                        pR = 0.5 * (pR_tot[i] + dpI / k);
+                        pI = 0.5 * (pI_tot[i] - dpR / k);
+                    }
+                }
+            } else if (mode === 'reflected') {
+                if (x <= barrierCenter - d/2) {
+                    pR = pR_tot[i] - Math.cos(k1 * x);
+                    pI = pI_tot[i] - Math.sin(k1 * x);
+                } else if (x >= barrierCenter + d/2) {
+                    pR = NaN; pI = NaN; // 势垒右侧绝无左行反射波，挖空
+                } else {
+                    // 势垒内部：使用局部空间导数剥离左行反弹波 (对应 exp(+kappa*x))
+                    let dpR = (pR_tot[i+1] - pR_tot[i-1]) / (2 * dx_stat);
+                    let dpI = (pI_tot[i+1] - pI_tot[i-1]) / (2 * dx_stat);
+                    let E_eff = E; if(Math.abs(E_eff - V0)<1e-6) E_eff += 1e-6;
+                    if (E_eff < V0) {
+                        const kappa = Math.sqrt(2 * mass * (V0 - E_eff)) / hbar;
+                        pR = 0.5 * (pR_tot[i] + dpR / kappa);
+                        pI = 0.5 * (pI_tot[i] + dpI / kappa);
+                    } else {
+                        const k = Math.sqrt(2 * mass * (E_eff - V0)) / hbar;
+                        pR = 0.5 * (pR_tot[i] - dpI / k);
+                        pI = 0.5 * (pI_tot[i] + dpR / k);
+                    }
+                }
+            }
+            
+            psiR[i] = pR;
+            psiI[i] = pI;
+            if (!isNaN(pR)) {
+                psiMag[i] = Math.sqrt(pR*pR + pI*pI);
+            } else {
+                psiMag[i] = NaN;
+            }
+        }
+        
+        // 动态缩放：确保干涉条纹(驻波)能完整显示
+        const scale = (height * 0.45) / Math.max(maxMagTotal, 1.2);
+        
+        // 辅助绘制函数 (处理NaN断点)
+        function drawLine(dataArray, color, lw) {
+            ctx.strokeStyle = color;
+            ctx.lineWidth = lw;
+            ctx.beginPath();
+            let isDrawing = false;
+            for(let i=0; i<N_stat; i++) {
+                if (isNaN(dataArray[i])) {
+                    isDrawing = false;
+                    continue;
+                }
+                const cx = getCanvasX(xMinVisible + i*dx_stat, width);
+                const cy = height/2 - dataArray[i] * scale;
+                if(!isDrawing) { ctx.moveTo(cx, cy); isDrawing = true; }
+                else { ctx.lineTo(cx, cy); }
+            }
+            ctx.stroke();
+        }
+
+        // 绘制波函数包络 (Envelope)
+        if (document.getElementById('showStaticEnv').checked) {
+            ctx.strokeStyle = isDark() ? 'rgba(255, 255, 255, 0.25)' : 'rgba(0, 0, 0, 0.2)'; 
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            let isD = false;
+            for(let i=0; i<N_stat; i++) {
+                if(isNaN(psiMag[i])) { isD = false; continue; }
+                const cx = getCanvasX(xMinVisible + i*dx_stat, width);
+                const cy = height/2 - psiMag[i] * scale;
+                if(!isD) { ctx.moveTo(cx, cy); isD = true; } 
+                else { ctx.lineTo(cx, cy); }
+            }
+            isD = false;
+            for(let i=N_stat-1; i>=0; i--) {
+                if(isNaN(psiMag[i])) { isD = false; continue; }
+                const cx = getCanvasX(xMinVisible + i*dx_stat, width);
+                const cy = height/2 + psiMag[i] * scale;
+                if(!isD) { ctx.moveTo(cx, cy); isD = true; } 
+                else { ctx.lineTo(cx, cy); }
+            }
+            ctx.stroke();
+        }
+
+        // 绘制虚部 (Red)
+        if (document.getElementById('showStaticImag').checked) {
+            drawLine(psiI, isDark() ? 'rgb(252, 129, 129)' : 'rgb(204, 0, 0)', 2.0);
+        }
+
+        // 绘制实部 (Blue)
+        if (document.getElementById('showStaticReal').checked) {
+            drawLine(psiR, isDark() ? 'rgb(99, 179, 237)' : 'rgb(0, 51, 204)', 2.0);
+        }
+    }
+
+    function renderAll() {
+        const cEnergy = document.getElementById('energyCanvas');
+        const cWave = document.getElementById('waveCanvas');
+        const cDensity = document.getElementById('densityCanvas');
+        const cEnsemble = document.getElementById('ensembleCanvas');
+        
+        renderEnergy(cEnergy.getContext('2d'), cEnergy.width, cEnergy.height);
+        renderWave(cWave.getContext('2d'), cWave.width, cWave.height);
+        renderDensity(cDensity.getContext('2d'), cDensity.width, cDensity.height);
+        renderEnsemble(cEnsemble.getContext('2d'), cEnsemble.width, cEnsemble.height);
+        
+        if (currentTab === 'data') {
+            renderStaticWave();
+        }
+        
+        updateActualTR();
+    }
+
+    function updatePlayPauseUI() {
+        const btn = document.getElementById('playPauseBtn');
+        btn.textContent = isPlaying ? "暂停" : "播放";
+        btn.style.background = isPlaying ? "#3182ce" : "#718096";
+        btn.style.borderColor = isPlaying ? "#2b6cb0" : "#4a5568";
+        btn.style.boxShadow = isPlaying ? "0 2px 4px rgba(49, 130, 206, 0.3)" : "0 2px 4px rgba(0, 0, 0, 0.1)";
+    }
+
+    function animationLoop() {
+        if (isPlaying) {
+            if (currentFrame < MAX_FRAMES) {
+                if (currentFrame < stateHistory.length - 1) {
+                    currentFrame++;
+                    loadState(currentFrame);
+                } else {
+                    for (let s = 0; s < stepsPerFrame; s++) {
+                        solveCrankNicolson();
+                    }
+                    currentTime += stepsPerFrame * dt;
+                    saveState();
+                    currentFrame++;
+                    document.getElementById('timeSlider').value = currentFrame;
+                    document.getElementById('timeValueDisp').textContent = currentTime.toFixed(2);
+                }
+                renderAll();
+            } else {
+                isPlaying = false;
+                updatePlayPauseUI();
+            }
+        }
+        animationId = requestAnimationFrame(animationLoop);
+    }
+
+    // --- 事件监听 ---
+    
+    function resetAndRender() {
+        initSimulation();
+        renderAll();
+    }
+
+    // 主题切换
+    document.getElementById('themeToggle').addEventListener('click', function() {
+        document.body.classList.toggle('dark-mode');
+        this.textContent = document.body.classList.contains('dark-mode') ? '☀️' : '🌙';
+        this.title = document.body.classList.contains('dark-mode') ? '切换白天模式' : '切换黑夜模式';
+        if (!isPlaying) renderAll(); // 暂停状态下强制重绘以更新颜色
+    });
+
+    document.getElementById('playPauseBtn').addEventListener('click', function() {
+        if (currentFrame >= MAX_FRAMES) {
+            resetAndRender();
+        }
+        isPlaying = !isPlaying;
+        updatePlayPauseUI();
+    });
+
+    document.getElementById('resetBtn').addEventListener('click', function() {
+        resetAndRender();
+        if (!isPlaying) {
+            isPlaying = true;
+            updatePlayPauseUI();
+        }
+    });
+    
+    document.getElementById('timeSlider').addEventListener('input', function() {
+        const targetFrame = parseInt(this.value);
+        if (isPlaying) {
+            isPlaying = false;
+            updatePlayPauseUI();
+        }
+        if (targetFrame > stateHistory.length - 1) {
+            loadState(stateHistory.length - 1);
+            while (stateHistory.length - 1 < targetFrame) {
+                for (let s = 0; s < stepsPerFrame; s++) solveCrankNicolson();
+                currentTime += stepsPerFrame * dt;
+                saveState();
+            }
+        }
+        currentFrame = targetFrame;
+        loadState(currentFrame);
+        renderAll();
+    });
+
+    function updateParams() {
+        V0 = parseFloat(document.getElementById('v0Slider').value);
+        d = parseFloat(document.getElementById('dSlider').value);
+        E = parseFloat(document.getElementById('eSlider').value);
+        sigma = parseFloat(document.getElementById('sigmaSlider').value);
+        
+        updatePotential();
+        
+        // 更改势垒参数后，截断由于旧势垒产生的历史数据
+        stateHistory.length = currentFrame + 1;
+        
+        document.getElementById('v0Value').textContent = V0.toFixed(1);
+        document.getElementById('dValue').textContent = d.toFixed(1);
+        document.getElementById('eValue').textContent = E.toFixed(1);
+        document.getElementById('sigmaValue').textContent = sigma.toFixed(1);
+        
+        if (currentTab === 'data') {
+            renderChart();
+            renderStaticWave();
+        }
+    }
+
+    let currentTab = 'sim';
+
+    document.getElementById('tabSim').addEventListener('click', () => {
+        currentTab = 'sim';
+        document.getElementById('tabSim').classList.add('active');
+        document.getElementById('tabData').classList.remove('active');
+        document.getElementById('viewSim').classList.add('active');
+        document.getElementById('viewData').classList.remove('active');
+    });
+
+    document.getElementById('tabData').addEventListener('click', () => {
+        currentTab = 'data';
+        document.getElementById('tabData').classList.add('active');
+        document.getElementById('tabSim').classList.remove('active');
+        document.getElementById('viewData').classList.add('active');
+        document.getElementById('viewSim').classList.remove('active');
+        renderStaticWave();
+        renderChart();
+    });
+
+    document.getElementById('chartVarSelect').addEventListener('change', renderChart);
+    document.getElementById('chartScaleSelect').addEventListener('change', renderChart);
+
+    function renderChart() {
+        if (currentTab !== 'data') return;
+        const canvas = document.getElementById('chartCanvas');
+        const ctx = canvas.getContext('2d');
+        const width = canvas.width;
+        const height = canvas.height;
+        
+        ctx.clearRect(0, 0, width, height);
+        
+        // 背景
+        ctx.fillStyle = isDark() ? '#000000' : '#f8fafc';
+        ctx.fillRect(0, 0, width, height);
+        
+        const varType = document.getElementById('chartVarSelect').value;
+        const scaleType = document.getElementById('chartScaleSelect').value;
+        
+        let xMin, xMax, currentX, xLabel;
+        if (varType === 'd') {
+            xMin = 0.05; xMax = 2.0; currentX = d; xLabel = '势垒宽度 d (nm)';
+        } else if (varType === 'E') {
+            xMin = 0.5; xMax = 4.0; currentX = E; xLabel = '粒子能量 E (eV)';
+        } else if (varType === 'V0') {
+            xMin = 0.5; xMax = 5.0; currentX = V0; xLabel = '势垒高度 V₀ (eV)';
+        }
+        
+        const padding = { top: 40, right: 40, bottom: 60, left: 80 };
+        const plotW = width - padding.left - padding.right;
+        const plotH = height - padding.top - padding.bottom;
+        
+        // Generate data
+        const numPoints = 300;
+        const data = [];
+        let yMin = scaleType === 'log' ? 1e-6 : 0;
+        let yMax = 1.0;
+        
+        for (let i = 0; i <= numPoints; i++) {
+            const x = xMin + (xMax - xMin) * (i / numPoints);
+            let e_val = E, v0_val = V0, d_val = d;
+            if (varType === 'd') d_val = x;
+            if (varType === 'E') e_val = x;
+            if (varType === 'V0') v0_val = x;
+            
+            let t = calculateTR(e_val, v0_val, d_val).T;
+            if (scaleType === 'log' && t < yMin) t = yMin; // clamp
+            data.push({ x, y: t });
+        }
+        
+        // Draw grid
+        ctx.strokeStyle = isDark() ? '#333' : '#e2e8f0';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        for(let i=0; i<=5; i++) {
+            const gy = padding.top + plotH * (i/5);
+            ctx.moveTo(padding.left, gy);
+            ctx.lineTo(width - padding.right, gy);
+        }
+        for(let i=0; i<=10; i++) {
+            const gx = padding.left + plotW * (i/10);
+            ctx.moveTo(gx, padding.top);
+            ctx.lineTo(gx, height - padding.bottom);
+        }
+        ctx.stroke();
+
+        // Draw Axes
+        ctx.strokeStyle = isDark() ? '#888' : '#718096';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(padding.left, padding.top);
+        ctx.lineTo(padding.left, height - padding.bottom);
+        ctx.lineTo(width - padding.right, height - padding.bottom);
+        ctx.stroke();
+        
+        function getScreenX(x) {
+            return padding.left + ((x - xMin) / (xMax - xMin)) * plotW;
+        }
+        function getScreenY(y) {
+            if (scaleType === 'log') {
+                const logY = Math.log10(y);
+                const logMin = Math.log10(yMin);
+                const logMax = Math.log10(yMax);
+                return padding.top + plotH - ((logY - logMin) / (logMax - logMin)) * plotH;
+            } else {
+                return padding.top + plotH - (y / yMax) * plotH;
+            }
+        }
+        
+        // Draw Curve
+        ctx.strokeStyle = isDark() ? '#4ade80' : '#3182ce';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        for (let i = 0; i < data.length; i++) {
+            const sx = getScreenX(data[i].x);
+            const sy = getScreenY(data[i].y);
+            if (i === 0) ctx.moveTo(sx, sy);
+            else ctx.lineTo(sx, sy);
+        }
+        ctx.stroke();
+        
+        // Draw current point
+        const currentT = calculateTR(varType==='E'?currentX:E, varType==='V0'?currentX:V0, varType==='d'?currentX:d).T;
+        let clampedT = currentT;
+        if (scaleType === 'log' && clampedT < yMin) clampedT = yMin;
+        const cx = getScreenX(currentX);
+        const cy = getScreenY(clampedT);
+        
+        ctx.fillStyle = '#e53e3e';
+        ctx.beginPath();
+        ctx.arc(cx, cy, 6, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = '#fff';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        
+        // Labels
+        ctx.fillStyle = isDark() ? '#e2e8f0' : '#4a5568';
+        ctx.font = '15px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText(xLabel, padding.left + plotW / 2, height - 15);
+        
+        ctx.save();
+        ctx.translate(25, padding.top + plotH / 2);
+        ctx.rotate(-Math.PI / 2);
+        ctx.fillText('理论透射率 T' + (scaleType==='log'?' (对数坐标)':''), 0, 0);
+        ctx.restore();
+        
+        // Current value text
+        ctx.textAlign = 'left';
+        const tDisp = currentT < 0.0001 ? currentT.toExponential(2) : currentT.toFixed(4);
+        ctx.fillStyle = isDark() ? '#fff' : '#1a202c';
+        ctx.font = 'bold 14px Arial';
+        ctx.fillText(`当前设定: X = ${currentX.toFixed(2)}, T = ${tDisp}`, cx + 12, cy - 12);
+        
+        // Annotations for fixed parameters
+        ctx.textAlign = 'right';
+        ctx.fillStyle = isDark() ? '#a0aec0' : '#718096';
+        ctx.font = '13px Arial';
+        let fixStr = [];
+        if (varType !== 'd') fixStr.push(`d = ${d.toFixed(2)} nm`);
+        if (varType !== 'E') fixStr.push(`E = ${E.toFixed(2)} eV`);
+        if (varType !== 'V0') fixStr.push(`V₀ = ${V0.toFixed(2)} eV`);
+        ctx.fillText(`固定参数: ${fixStr.join(', ')}`, width - padding.right, padding.top + 20);
+    }
+
+    document.getElementById('v0Slider').addEventListener('input', () => { updateParams(); updateTheoreticalTR(); if(!isPlaying) renderAll(); });
+    document.getElementById('dSlider').addEventListener('input', () => { updateParams(); updateTheoreticalTR(); if(!isPlaying) renderAll(); });
+    
+    // 调节波包能量或宽度时，强行重置波包
+    document.getElementById('eSlider').addEventListener('input', () => { updateParams(); resetAndRender(); });
+    document.getElementById('sigmaSlider').addEventListener('input', () => { updateParams(); resetAndRender(); });
+
+    // 初始化
+    window.addEventListener('load', () => {
+        initSimulation();
+        animationId = requestAnimationFrame(animationLoop);
+        
+        // 绑定主题切换时重绘图表
+        document.getElementById('themeToggle').addEventListener('click', () => {
+            if (currentTab === 'data') renderChart();
+        });
+        
+        // 绑定静态图互动选项事件
+        const staticModeInputs = document.querySelectorAll('input[name="staticMode"]');
+        staticModeInputs.forEach(input => {
+            input.addEventListener('change', () => {
+                if (currentTab === 'data') renderStaticWave();
+            });
+        });
+        
+        // 绑定可见性复选框事件
+        ['showStaticReal', 'showStaticImag', 'showStaticEnv'].forEach(id => {
+            document.getElementById(id).addEventListener('change', () => {
+                if (currentTab === 'data') renderStaticWave();
+            });
+        });
+    });
+    </script>
+</body>
+</html>
