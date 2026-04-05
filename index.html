@@ -2,7 +2,15 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="format-detection" content="telephone=no">
+    <!-- 强制 QQ / 微信 浏览器竖屏 -->
+    <meta name="x5-orientation" content="portrait">
+    <meta name="x5-fullscreen" content="true">
+    <meta name="screen-orientation" content="portrait">
+    <meta name="full-screen" content="yes">
     <title>量子隧穿仿真</title>
     <style>
         * {
@@ -57,6 +65,12 @@
             overflow: hidden;
             background: #f8fafc;
             box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);
+            /* 桌面端默认给上方留出文字空间，防止文字完全盖住顶部波峰 */
+            padding-top: 36px;
+        }
+        body.dark-mode .canvas-container {
+            background: #111827;
+            border-color: #374151;
         }
         canvas {
             display: block;
@@ -64,16 +78,23 @@
         }
         .canvas-label {
             position: absolute;
-            top: 12px;
-            left: 12px;
+            top: 0;
+            left: 0;
+            width: 100%;
             font-size: 13px;
             font-weight: 500;
             color: #4a5568;
             pointer-events: none;
-            background: rgba(255,255,255,0.85);
-            padding: 4px 8px;
-            border-radius: 6px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            background: rgba(240, 244, 248, 0.95);
+            padding: 8px 12px;
+            border-bottom: 1px solid rgba(0,0,0,0.05);
+            box-shadow: 0 1px 2px rgba(0,0,0,0.02);
+            z-index: 5;
+        }
+        body.dark-mode .canvas-label {
+            background: rgba(31, 41, 55, 0.95);
+            color: #a0aec0;
+            border-bottom-color: rgba(255,255,255,0.05);
         }
         
         /* 测量交互提示文本 */
@@ -462,59 +483,180 @@
             background: rgba(0,0,0,0.4);
         }
 
-        /* 移动端响应式适配 */
+        /* 移动端响应式适配 - 优化美观度与拥挤感 */
         @media (max-width: 900px) {
             body {
-                padding: 15px 10px;
+                padding: 10px 10px 40px;
+            }
+            h1 {
+                font-size: 20px;
+                margin-bottom: 12px;
+                padding-right: 40px; /* 给右侧月亮按钮留出空间 */
+            }
+            #themeToggle {
+                top: 8px;
+                right: 10px;
+                width: 32px;
+                height: 32px;
+                font-size: 16px;
             }
             .main-layout {
                 flex-direction: column;
-                gap: 20px;
+                gap: 15px;
             }
             .right-panel {
                 width: 100%;
+                gap: 15px;
             }
             .tabs {
-                flex-wrap: wrap;
-                gap: 10px;
-                margin-bottom: 15px;
+                gap: 8px;
+                margin-bottom: 12px;
             }
             .tab-btn {
-                flex: 1;
-                text-align: center;
+                padding: 10px;
+                font-size: 14px;
+                border-radius: 8px;
+            }
+            .canvas-container {
+                margin-bottom: 12px;
+                border-radius: 10px;
+            }
+            .canvas-label {
+                font-size: 10px;
+                padding: 3px 5px;
+                top: 4px;
+                left: 4px;
+                background: rgba(255,255,255,0.7);
+                border-radius: 4px;
+                backdrop-filter: blur(2px);
+                -webkit-backdrop-filter: blur(2px); /* 兼容 Safari / iOS */
+                box-shadow: none;
+                border: 1px solid rgba(0,0,0,0.05);
+            }
+            body.dark-mode .canvas-label {
+                background: rgba(0,0,0,0.5);
+                border-color: rgba(255,255,255,0.1);
+            }
+            /* 让手机端高度等比缩小一点，避免占用太多竖向空间 */
+            canvas {
+                max-height: 180px; 
+            }
+            /* 能量图特殊处理，保持更扁平 */
+            #energyCanvas {
+                max-height: 80px;
+            }
+            /* 粒子系综特别扁，以免在手机上挤占正文 */
+            #ensembleCanvas {
+                max-height: 90px;
+            }
+            /* 底部的关系图不要缩得太扁 */
+            #chartCanvas {
+                max-height: 220px;
+            }
+            .controls {
+                padding: 15px;
+                gap: 12px;
+            }
+            .control-group label {
+                font-size: 12px;
+            }
+            input[type="range"] {
+                height: 8px;
+            }
+            input[type="range"]::-webkit-slider-thumb {
+                width: 22px;
+                height: 22px;
+            }
+            .btn-group button {
+                padding: 10px 0;
+                font-size: 14px;
+            }
+            .results {
                 padding: 12px;
-                font-size: 15px;
+                display: flex;
+                flex-wrap: wrap;
+                gap: 8px;
+                background: transparent;
+                border: none;
+                box-shadow: none;
             }
-            .chart-controls {
+            .results hr {
+                display: none; /* 手机端隐藏分割线，改用卡片布局 */
+            }
+            .results div {
+                flex: 1 1 45%;
+                font-size: 12px !important;
+                background: #fff;
+                padding: 10px;
+                border-radius: 8px;
+                border: 1px solid #e2e8f0;
+                box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+                display: flex;
                 flex-direction: column;
-                align-items: stretch;
+                justify-content: center;
             }
-            .chart-controls label {
-                margin-left: 0 !important;
-                margin-bottom: 4px;
+            .results div:last-child {
+                flex: 1 1 100%;
             }
-            .chart-controls select {
-                width: 100%;
-                margin-bottom: 10px;
+            .results span {
+                font-size: 18px !important;
+                margin-top: 4px;
+                padding: 0;
+                background: transparent;
+                box-shadow: none;
+            }
+            body.dark-mode .results div {
+                background: #1a202c;
+                border-color: #2d3748;
+            }
+            .static-controls {
+                padding: 12px;
+                border-radius: 10px;
+                margin-bottom: 12px;
+            }
+            .static-controls-title {
+                font-size: 13px;
+                margin-bottom: 8px;
             }
             .static-controls-options {
                 flex-direction: column;
                 align-items: flex-start;
-                gap: 10px;
+                gap: 6px;
+            }
+            .static-controls-options label {
+                width: 100%;
+                padding: 8px 0;
+                border-bottom: 1px solid rgba(0,0,0,0.05);
+            }
+            body.dark-mode .static-controls-options label {
+                border-bottom-color: rgba(255,255,255,0.05);
+            }
+            .static-controls-options label:last-child {
+                border-bottom: none;
             }
             .mode-desc {
                 margin-left: 0;
                 width: 100%;
                 text-align: left;
-                margin-top: 8px;
+                margin-top: 6px;
+                font-size: 12px;
+                line-height: 1.4;
             }
-            h1 {
-                font-size: 24px;
-                margin-bottom: 15px;
+            .chart-controls {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 10px;
+                padding: 12px;
+                margin-bottom: 12px;
             }
-            #themeToggle {
-                top: 15px;
-                right: 15px;
+            .chart-controls label {
+                margin-left: 0 !important;
+                margin-bottom: 0;
+                font-size: 13px;
+            }
+            .chart-controls select {
+                width: 100%;
+                padding: 8px;
             }
         }
     </style>
