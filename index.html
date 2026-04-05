@@ -461,6 +461,62 @@
             color: #fc8181;
             background: rgba(0,0,0,0.4);
         }
+
+        /* 移动端响应式适配 */
+        @media (max-width: 900px) {
+            body {
+                padding: 15px 10px;
+            }
+            .main-layout {
+                flex-direction: column;
+                gap: 20px;
+            }
+            .right-panel {
+                width: 100%;
+            }
+            .tabs {
+                flex-wrap: wrap;
+                gap: 10px;
+                margin-bottom: 15px;
+            }
+            .tab-btn {
+                flex: 1;
+                text-align: center;
+                padding: 12px;
+                font-size: 15px;
+            }
+            .chart-controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .chart-controls label {
+                margin-left: 0 !important;
+                margin-bottom: 4px;
+            }
+            .chart-controls select {
+                width: 100%;
+                margin-bottom: 10px;
+            }
+            .static-controls-options {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+            .mode-desc {
+                margin-left: 0;
+                width: 100%;
+                text-align: left;
+                margin-top: 8px;
+            }
+            h1 {
+                font-size: 24px;
+                margin-bottom: 15px;
+            }
+            #themeToggle {
+                top: 15px;
+                right: 15px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -1213,9 +1269,9 @@
         if (mode === 'total') {
             descEl.textContent = "👈 驻波干涉：导致实虚部振幅不同，包络呈波浪起伏";
         } else if (mode === 'incident') {
-            descEl.textContent = "👈 右行波：注意势垒边界的波形断层！单独的行波无法在此平滑连续。";
+            descEl.textContent = "👈 右行波：注意边界的波形断层！这说明“单个行波”无法满足薛定谔方程的连续性，必须产生反射波来填补断层。";
         } else if (mode === 'reflected') {
-            descEl.textContent = "👈 左行波：入射波与势垒内部波的断层，正是由这段左行反射波填补的！";
+            descEl.textContent = "👈 左行波：它就像“粘合剂”，其在边界处的值精确等于右行波断层的落差，两者叠加才恢复平滑的总波！";
         }
         
         const psiR = new Float64Array(N_stat);
