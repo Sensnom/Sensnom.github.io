@@ -1481,13 +1481,7 @@
         
         const controlPanel = document.querySelector('.right-panel');
         if (window.innerWidth <= 768) {
-             const activeView = document.querySelector('.view-container.active');
-             if (activeView && activeView.id === 'viewTheory') {
-                 // Do nothing! Let the user stay exactly where they clicked
-                 // The canvas is either sticky or right above them.
-             } else {
-                 controlPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
-             }
+            // Scroll logic removed for PiP mode
         }
         
         function step(time) {
@@ -1544,7 +1538,47 @@
         }, 50);
     };
 
-        window.updateTheoryCalc = function() {
+            
+    // --- PiP (Picture in Picture) for Theory Canvas on Mobile ---
+    let pipInitialized = false;
+    document.getElementById('tabTheory').addEventListener('click', () => {
+        if (pipInitialized) return;
+        pipInitialized = true;
+        
+        const theoryCanvasContainer = document.querySelector('.theory-canvas-container');
+        if (!theoryCanvasContainer) return;
+        
+        const wrapper = document.createElement('div');
+        wrapper.className = 'theory-canvas-wrapper';
+        wrapper.style.position = 'relative';
+        
+        theoryCanvasContainer.parentNode.insertBefore(wrapper, theoryCanvasContainer);
+        wrapper.appendChild(theoryCanvasContainer);
+        
+        const checkPiP = () => {
+            // Desktop and mobile both get PiP!
+            
+            // Check if wrapper has scrolled out of view (above viewport)
+            const rect = wrapper.getBoundingClientRect();
+            if (rect.bottom < 0) {
+                if (!theoryCanvasContainer.classList.contains('pip-mode')) {
+                    wrapper.style.height = theoryCanvasContainer.offsetHeight + 'px';
+                    theoryCanvasContainer.classList.add('pip-mode');
+                }
+            } else {
+                if (theoryCanvasContainer.classList.contains('pip-mode')) {
+                    theoryCanvasContainer.classList.remove('pip-mode');
+                    wrapper.style.height = 'auto';
+                }
+            }
+        };
+        
+        window.addEventListener('scroll', checkPiP, { passive: true });
+        window.addEventListener('resize', checkPiP, { passive: true });
+    });
+
+    
+    window.updateTheoryCalc = function() {
         const e_val = E;
         const v0_val = V0;
         const d_val = d;

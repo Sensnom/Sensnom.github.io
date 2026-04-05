@@ -1094,7 +1094,7 @@
         }
 
         @media (max-height: 500px) {
-            .sticky-theory-canvas { position: static !important; }
+            .sticky-theory-canvas { position: relative; }
         }
         .dark-mode .canvas-label { background: #0f172a; border-color: #334155; color: #cbd5e1 !important; }
 
@@ -1377,6 +1377,7 @@
         .dark-mode .theme-color-mode-3 { color: #68d391 !important; }
 
 
+
 /* Fix for theory canvas label overlapping the wave drawing */
 .theory-canvas-container {
     padding-top: 0 !important;
@@ -1386,4 +1387,67 @@
     top: auto !important;
     left: auto !important;
     width: auto !important;
+}
+
+/* Picture-in-Picture (PiP) mode for Theory Canvas (All screens) */
+.sticky-theory-canvas {
+    position: relative;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.02) !important;
+    transition: box-shadow 0.3s ease;
+    z-index: 100 !important;
+}
+body.dark-mode .sticky-theory-canvas {
+    box-shadow: none !important;
+}
+
+.sticky-theory-canvas.pip-mode {
+    position: fixed !important;
+    top: auto !important;
+    bottom: 25px !important;
+    right: 25px !important;
+    width: 320px !important; /* Desktop size */
+    height: auto !important;
+    padding: 6px !important;
+    border-radius: 12px !important;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3) !important;
+    border: 2px solid #3182ce !important;
+    background: rgba(255, 255, 255, 0.95) !important;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    overflow: hidden;
+    animation: pipPop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+    z-index: 9999 !important;
+    transform-origin: bottom right;
+}
+
+@keyframes pipPop {
+    0% { transform: scale(0.8) translateY(20px); opacity: 0; }
+    100% { transform: scale(1) translateY(0); opacity: 1; }
+}
+
+body.dark-mode .sticky-theory-canvas.pip-mode {
+    background: rgba(30, 41, 59, 0.95) !important;
+    border-color: #4299e1 !important;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.6) !important;
+}
+
+.sticky-theory-canvas.pip-mode .theory-canvas-label {
+    display: none !important;
+}
+
+.sticky-theory-canvas.pip-mode canvas {
+    width: 100% !important;
+    height: auto !important;
+    aspect-ratio: 800 / 220; /* Force the canvas element to keep its ratio even in pip-mode */
+    display: block;
+    object-fit: contain;
+}
+
+@media (max-width: 900px) {
+    .sticky-theory-canvas.pip-mode {
+        width: 200px !important; /* Mobile size */
+        bottom: 15px !important;
+        right: 15px !important;
+        padding: 4px !important;
+    }
 }
