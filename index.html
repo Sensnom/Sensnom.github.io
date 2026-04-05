@@ -20,9 +20,11 @@
         }
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-            background: #f0f4f8;
-            color: #2c3e50;
-            padding: 30px 20px;
+            background-color: #f0f4f8;
+            color: #2d3748;
+            margin: 0;
+            padding: 20px;
+            overflow-x: hidden;
         }
         .container {
             position: relative;
@@ -32,6 +34,9 @@
             padding: 30px;
             border-radius: 12px;
             box-shadow: 0 8px 24px rgba(0,0,0,0.06);
+            width: 100%;
+            box-sizing: border-box;
+            overflow: hidden;
         }
         h1 {
             text-align: center;
@@ -45,10 +50,16 @@
             display: flex;
             gap: 30px;
             align-items: flex-start;
+            width: 100%;
+            box-sizing: border-box;
         }
         .left-panel {
             flex: 1;
             min-width: 0;
+            width: 100%;
+            max-width: 100%;
+            box-sizing: border-box;
+            overflow: hidden;
         }
         .right-panel {
             width: 340px;
@@ -487,6 +498,15 @@
         @media (max-width: 900px) {
             body {
                 padding: 10px 10px 40px;
+                overflow-x: hidden;
+                max-width: 100vw;
+            }
+            .container {
+                padding: 15px;
+                width: 100%;
+                max-width: 100%;
+                box-sizing: border-box;
+                overflow-x: hidden;
             }
             h1 {
                 font-size: 20px;
@@ -504,6 +524,11 @@
                 flex-direction: column;
                 gap: 15px;
             }
+            .view-container {
+                width: 100%;
+                overflow-x: hidden;
+                box-sizing: border-box;
+            }
             .right-panel {
                 width: 100%;
                 gap: 15px;
@@ -511,11 +536,14 @@
             .tabs {
                 gap: 8px;
                 margin-bottom: 12px;
+                flex-wrap: wrap;
             }
             .tab-btn {
                 padding: 10px;
                 font-size: 14px;
                 border-radius: 8px;
+                flex: 1 1 30%;
+                text-align: center;
             }
             .canvas-container {
                 margin-bottom: 12px;
@@ -659,6 +687,306 @@
                 padding: 8px;
             }
         }
+
+        /* --- 历史时间轴样式 --- */
+        .history-layout {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            background: #fff;
+            border-radius: 10px;
+            border: 1px solid #e2e8f0;
+            padding: 20px;
+            width: 100%;
+            box-sizing: border-box;
+            overflow: hidden; /* 防止横向时间轴撑爆父容器 */
+        }
+        body.dark-mode .history-layout {
+            background: #0a0a0a;
+            border-color: #333;
+        }
+        .timeline-nodes {
+            display: flex;
+            gap: 15px;
+            overflow-x: auto;
+            padding: 10px 5px 20px 5px;
+            scroll-snap-type: x mandatory;
+            scroll-behavior: smooth;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        .timeline-nodes::-webkit-scrollbar {
+            height: 8px;
+        }
+        .timeline-nodes::-webkit-scrollbar-thumb {
+            background: #cbd5e0;
+            border-radius: 4px;
+        }
+        body.dark-mode .timeline-nodes::-webkit-scrollbar-thumb {
+            background: #4a5568;
+        }
+        .timeline-card {
+            flex: 0 0 200px;
+            scroll-snap-align: start;
+            background: #f8fafc;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 15px;
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+            box-sizing: border-box;
+            overflow: hidden;
+            word-wrap: break-word;
+        }
+        body.dark-mode .timeline-card {
+            background: #1a202c;
+            border-color: #2d3748;
+        }
+        .timeline-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+        .timeline-card.active {
+            border-color: #3182ce;
+            background: #ebf8ff;
+        }
+        body.dark-mode .timeline-card.active {
+            border-color: #63b3ed;
+            background: rgba(49, 130, 206, 0.2);
+        }
+        .timeline-year {
+            font-size: 20px;
+            font-weight: 800;
+            color: #2b6cb0;
+            margin-bottom: 5px;
+        }
+        body.dark-mode .timeline-year {
+            color: #90cdf4;
+        }
+        .timeline-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #2d3748;
+            line-height: 1.3;
+        }
+        body.dark-mode .timeline-title {
+            color: #e2e8f0;
+        }
+        .history-content-area {
+            display: flex;
+            gap: 20px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        .history-detail-panel {
+            flex: 2;
+            background: #f8fafc;
+            padding: 25px;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+            font-size: 15px;
+            line-height: 1.6;
+            color: #4a5568;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            overflow: hidden;
+            box-sizing: border-box;
+        }
+        body.dark-mode .history-detail-panel {
+            background: #1a202c;
+            border-color: #2d3748;
+            color: #cbd5e0;
+        }
+        .history-detail-title {
+            font-size: 22px;
+            font-weight: 700;
+            color: #1a202c;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        body.dark-mode .history-detail-title {
+            color: #f7fafc;
+        }
+        .history-detail-image {
+            float: right;
+            margin: 0 0 15px 20px;
+            width: 120px;
+            height: 120px;
+            background: #e2e8f0;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 50px;
+        }
+        body.dark-mode .history-detail-image {
+            background: #2d3748;
+        }
+        .param-tip {
+            flex: 1;
+            background: linear-gradient(135deg, #ebf8ff 0%, #e6fffa 100%);
+            border: 1px solid #bee3f8;
+            padding: 20px;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            box-sizing: border-box;
+            overflow: hidden;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+        }
+        body.dark-mode .param-tip {
+            background: linear-gradient(135deg, rgba(49, 130, 206, 0.1) 0%, rgba(56, 178, 172, 0.1) 100%);
+            border-color: #2b6cb0;
+        }
+        .param-tip-title {
+            font-weight: 700;
+            color: #2c5282;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        body.dark-mode .param-tip-title {
+            color: #63b3ed;
+        }
+        .param-tip-desc {
+            font-size: 14px;
+            color: #2b6cb0;
+            line-height: 1.5;
+        }
+        body.dark-mode .param-tip-desc {
+            color: #90cdf4;
+        }
+        .param-btn {
+            margin-top: auto;
+            background: #3182ce;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .param-btn:hover {
+            background: #2b6cb0;
+        }
+        
+        .expand-btn {
+            background: none;
+            border: none;
+            color: #3182ce;
+            font-weight: 600;
+            cursor: pointer;
+            padding: 0;
+            margin-top: 15px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            box-shadow: none;
+        }
+        body.dark-mode .expand-btn {
+            color: #63b3ed;
+            background: none;
+            border: none;
+        }
+        .expand-btn:hover {
+            text-decoration: underline;
+            background: none;
+            transform: none;
+            box-shadow: none;
+        }
+        .expanded-content {
+            display: none;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px dashed #cbd5e0;
+            font-size: 14px;
+        }
+        body.dark-mode .expanded-content {
+            border-top-color: #4a5568;
+        }
+        
+        @media (max-width: 900px) {
+            .view-container {
+                width: 100%;
+                overflow-x: hidden;
+            }
+            .history-layout {
+                width: 100%;
+                padding: 10px;
+                gap: 10px;
+                overflow-x: hidden;
+                box-sizing: border-box;
+                max-width: 100%;
+            }
+            .timeline-nodes {
+                padding: 8px 2px 16px 2px;
+                gap: 10px;
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+                width: 100%;
+                max-width: 100%;
+                box-sizing: border-box;
+            }
+            .timeline-card {
+                flex: 0 0 130px;
+                padding: 10px 8px;
+            }
+            .timeline-year {
+                font-size: 15px;
+            }
+            .timeline-title {
+                font-size: 11px;
+                line-height: 1.2;
+            }
+            .history-content-area {
+                flex-direction: column;
+            }
+            .history-detail-panel {
+                padding: 14px;
+                font-size: 13px;
+                line-height: 1.5;
+                word-wrap: break-word;
+                overflow-wrap: break-word;
+            }
+            .history-detail-title {
+                font-size: 16px;
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 8px;
+            }
+            .history-detail-image {
+                width: 70px;
+                height: 70px;
+                font-size: 32px;
+                float: none;
+                margin: 0 0 10px 0;
+            }
+            .param-tip {
+                padding: 12px;
+            }
+            .param-tip-title {
+                font-size: 13px;
+            }
+            .param-tip-desc {
+                font-size: 12px;
+            }
+            .param-btn {
+                font-size: 12px;
+                padding: 8px 10px;
+                white-space: normal;
+                word-wrap: break-word;
+            }
+            .expand-btn {
+                font-size: 13px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -671,6 +999,7 @@
                 <div class="tabs">
                     <button class="tab-btn active" id="tabSim">实时演化</button>
                     <button class="tab-btn" id="tabData">参数关系</button>
+                    <button class="tab-btn" id="tabHistory">发展历史</button>
                 </div>
                 
                 <!-- 这些视图在两个Tab下都保持可见，方便观察实时演化 -->
@@ -734,6 +1063,22 @@
                         <canvas id="chartCanvas" width="800" height="280"></canvas>
                     </div>
                 </div>
+                <div id="viewHistory" class="view-container">
+                    <div class="history-layout">
+                        <div class="timeline-nodes" id="timelineNodes">
+                            <!-- Nodes generated by JS -->
+                        </div>
+                        <div class="history-content-area">
+                            <div class="history-detail-panel" id="historyDetailPanel">
+                                <!-- Details generated by JS -->
+                            </div>
+                            <div class="param-tip" id="historyParamTip">
+                                <!-- Simulation parameter hint generated by JS -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
             </div>
             
             <div class="right-panel">
@@ -1575,6 +1920,280 @@
         btn.style.boxShadow = isPlaying ? "0 2px 4px rgba(49, 130, 206, 0.3)" : "0 2px 4px rgba(0, 0, 0, 0.1)";
     }
 
+
+    // --- 发展历史时间轴数据与逻辑 ---
+    let timelineInitialized = false;
+    let selectedHistoryNode = 0;
+
+    const historyData = [
+        {
+          year: "1924",
+          title: "物质波假说 (Louis de Broglie)",
+          desc: "提出电子等实物粒子也具有波动性，这是微观粒子能够“渗透”经典禁区的根本物理前提。",
+          icon: "🌊",
+          details: "德布罗意提出 λ = h/p，将粒子的动量与波长联系起来。既然粒子具有波动性质，其波函数在遇到势垒时就不会像经典粒子那样被完全弹回——而是会在势垒内部呈现指数衰减形式（即便能量低于势垒高度），并在另一侧重新出现。这就是隧穿效应的理论萌芽。",
+          paramTitle: "观察物质波的干涉",
+          paramDesc: "设置极窄的波包(sigma=0.2)配合厚壁垒(d=0.9)，观察波包大部分被反射且在传播过程中迅速扩散——这正是位置-动量不确定关系的体现。",
+          action: { E: 1.0, V0: 3.0, d: 0.5, sigma: 0.8 },
+        },
+        {
+          year: "1926",
+          title: "薛定谔方程 (Erwin Schrödinger)",
+          desc: "建立了描述微观粒子波函数的偏微分方程，从数学上为隧穿效应提供了严谨的形式基础。",
+          icon: "⚗️",
+          details: "薛定谔发表了他的波动方程。当求解该方程时，人们惊奇地发现：在势能大于粒子总能量 (V > E) 的经典禁区内，波函数的解并不是零，而是一个呈指数衰减的实函数。这表明微观粒子在经典力学绝对不允许的区域内，依然存在非零的概率分布。",
+          paramTitle: "势垒内的指数衰减",
+          paramDesc: "设置极窄的波包(sigma=0.2)配合厚壁垒(d=0.9)，观察波包大部分被反射且在传播过程中迅速扩散——这正是位置-动量不确定关系的体现。",
+          action: { E: 1.5, V0: 4.0, d: 0.5, sigma: 0.5 },
+        },
+        {
+          year: "1926",
+          title: "WKB近似法 (Wentzel · Kramers · Brillouin)",
+          desc: "Wentzel、Kramers、Brillouin 独立发展了求解隧穿问题的标准近似方法，将精确的波动方程简化为可解析计算的指数衰减公式。",
+          icon: "📐",
+          details: "在薛定谔方程出现后，Gregor Wentzel、Hendrik Kramers 和 Léon Brillouin（简称 WKB）发明了一套近似方法，用于求解存在势垒时的量子波函数。WKB 近似的核心结论是：隧穿概率 T ≈ exp(-2κd)，其中 κ = √(2m(V₀-E))/ℏ。这意味着隧穿率随壁垒宽度 d 呈指数衰减——这正是 α 衰变半衰期跨越大范围（10^-10 秒到 10^20 秒）的物理根源。WKB 公式至今仍是估算隧穿率的标准工具。",
+          paramTitle: "体验指数敏感性",
+          paramDesc: "设置极窄的波包(sigma=0.2)配合厚壁垒(d=0.9)，观察波包大部分被反射且在传播过程中迅速扩散——这正是位置-动量不确定关系的体现。",
+          action: { E: 1.5, V0: 3.0, d: 0.6, sigma: 0.5 },
+        },
+        {
+          year: "1927",
+          title: "不确定性原理 (Werner Heisenberg)",
+          desc: "海森堡提出 Δx·Δp ≥ ℏ/2，为理解量子隧穿提供了关键的物理图像。",
+          icon: "🌀",
+          details: "不确定性原理的正确理解是：当我们把粒子极度限制在一个很窄的势垒内（Δx 变小）时，其动量不确定度 Δp 会急剧增大。但这并非「借能量」，而是量子力学波函数的固有特性——粒子的动量分布变宽，意味着它的波函数包含更多动量分量。求解势垒区域的薛定谔方程后我们发现：即使能量 E 小于势垒高度 V₀，波函数在势垒内部也不是零，而是呈指数衰减形式。这说明隧穿不是粒子「借能翻越」，而是波函数本身在经典禁区有非零延伸的必然结果。",
+          paramTitle: "窄势垒下的动量扩散",
+          paramDesc: "设置极窄的波包(sigma=0.2)配合厚壁垒(d=0.9)，观察波包大部分被反射且在传播过程中迅速扩散——这正是位置-动量不确定关系的体现。",
+          action: { E: 2.0, V0: 3.5, d: 0.9, sigma: 0.2 },
+        },
+        {
+          year: "1927",
+          title: "隧穿的数学发现 (Friedrich Hund)",
+          desc: "在研究双势阱（如氨分子反转）的基态时，Hund 首次从数学上注意到了量子隧穿效应的存在。",
+          icon: "🔬",
+          details: "Hund 发现，在双势阱中，即使粒子的能量不足以越过中间的势垒，由于薛定谔方程的解在势垒内并不是零，粒子依然有一定的概率穿过势垒到达另一侧。这是量子力学波函数“渗透”特性的首次体现，打破了经典力学中粒子绝对无法越过比自身能量高的势垒的常识。",
+          paramTitle: "穿透双势阱的一半",
+          paramDesc: "注意：即使势垒很高，只要宽度不是无限大，波函数在势垒内并未立刻变为零。",
+          action: { E: 1.5, V0: 4.0, d: 0.4, sigma: 0.5 },
+        },
+        {
+          year: "1928",
+          title: "场发射与Fowler-Nordheim隧穿 (Fowler & Nordheim)",
+          desc: "Fowler 和 Nordheim 建立了金属场发射的量子理论，首次将隧穿用于解释外加电场下的电子发射现象。",
+          icon: "⚡",
+          details: "Fowler 与 Nordheim 发现，当金属表面加强电场时（即使温度不高），电子也有一定概率隧穿穿透表面势垒而逃逸到真空中——这称为场发射（Field Emission）。他们的理论给出了隧穿电流与电场的指数关系，成为后来闪存写入原理和扫描隧道显微镜（STM）的直接理论基础。江崎玲於奈的隧穿二极管正是这一现象在半导体中的对应实现。",
+          paramTitle: "感受隧穿对电场的敏感性",
+          paramDesc: "在STM节点中我们已经看到 d 对 T 的指数敏感性。Fowler-Nordheim 隧穿告诉我们：当外加电场增大（相当于降低有效势垒厚度），电子隧穿概率会急剧上升。",
+          action: { E: 1.5, V0: 4.0, d: 0.3, sigma: 0.5 },
+        },
+        {
+          year: "1928",
+          title: "α衰变的解释 (George Gamow)",
+          desc: "George Gamow (以及 Gurney & Condon) 利用量子隧穿成功解释了放射性原子核的 α 衰变。",
+          icon: "☢️",
+          details: "在此之前，人们不理解为什么原子核中的 α 粒子能跑出来：它们在核内的能量远小于核外巨大的库仑势垒高度。Gamow 运用量子力学证明，由于波函数的指数衰减，α 粒子有一条“能量隧道”可以逃逸。这成为了量子隧穿理论的第一次巨大成功。",
+          paramTitle: "模拟厚重势垒中的衰减",
+          paramDesc: "我们将势垒加宽并提高，模拟放射性元素核内的强库仑势垒，此时透射系数非常小，对应漫长的半衰期。",
+          action: { E: 1.0, V0: 3.5, d: 1.2, sigma: 0.6 },
+        },
+        {
+          year: "1928",
+          title: "概率波诠释 (Max Born)",
+          desc: "Max Born 进一步完善了波函数的统计/概率诠释。",
+          icon: "🎲",
+          details: "Born 提出波函数绝对值的平方 |Ψ|² 代表粒子在某处被找到的概率密度——这是量子力学的基本公设之一。这意味着，隧穿现象的本质不是粒子「挖洞」或「借能」越过势垒，而是粒子波函数在势垒另一侧存在非零概率的直接表现。此外，Born 的统计诠释还隐含了另一层深意：在势垒两侧出现的粒子是同一个粒子的不同可能位置，而非两个独立粒子。这一诠释为后来量子场论中「粒子产生与湮灭」的概念奠定了基础。",
+          paramTitle: "查看概率密度视图",
+          paramDesc: "加厚壁垒(d=0.8)，此时反射与透射并存，可同时观察入射波包、反射波包以及垒右侧的概率密度分布。",
+          action: { E: 1.5, V0: 2.0, d: 0.8, sigma: 0.5 },
+        },
+        {
+          year: "1957",
+          title: "隧穿二极管 (江崎玲於奈)",
+          desc: "发现了重掺杂半导体 PN 结中的电子隧穿效应，发明了隧穿二极管。",
+          icon: "🔌",
+          details: "江崎玲於奈（Leo Esaki）发现，当半导体掺杂浓度极高时，PN结的耗尽层会变得极薄（几纳米级别）。此时，电子可以直接隧穿过禁带，产生特殊的负阻效应。这是隧穿效应在固体电子学中的首次实际应用，江崎因此获得了 1973 年诺贝尔物理学奖。",
+          paramTitle: "模拟极薄耗尽层",
+          paramDesc: "将势垒宽度 d 减小到 0.15nm 左右，你会发现即使势垒很高，透射率 T 也极大提升！",
+          action: { E: 1.5, V0: 3.5, d: 0.15, sigma: 0.5 },
+        },
+        {
+          year: "1960",
+          title: "超导隧穿 (Ivar Giaever)",
+          desc: "证明了电子可以通过一层极薄的氧化物绝缘层在两个超导体之间隧穿。",
+          icon: "⚡",
+          details: "Giaever 将两块超导金属用一层极薄的氧化层隔开。在低温下，他测量到了明显的隧穿电流。这项实验不仅证实了固体中的隧穿现象，也为验证 BCS 超导理论中的“能隙”提供了直接的实验证据。",
+          paramTitle: "微弱但非零的隧穿",
+          paramDesc: "只要势垒够薄，即使能量 E 小于势垒 V0，波就会在另一端重新出现。",
+          action: { E: 1.0, V0: 2.5, d: 0.5, sigma: 0.5 },
+        },
+        {
+          year: "1962",
+          title: "约瑟夫森效应 (Brian Josephson)",
+          desc: "预测库珀对可以在没有电压的情况下穿过绝缘势垒。",
+          icon: "🧲",
+          details: "Josephson 从理论上预测了两种效应：①**直流约瑟夫森效应**：库珀对可以在零电压下隧穿过绝缘层，产生持续的超导电流；②**交流约瑟夫森效应**：当施加直流电压 V 时，隧穿电流会以频率 f = 2eV/h 振荡（该频率由量子力学基本常数决定，可作为电压的量子基准）。这两大效应都被实验精确验证，是超导量子干涉器件（SQUID）和现代超导量子计算机（如Google Sycamore芯片）的物理核心机制。",
+          paramTitle: "微弱但非零的隧穿",
+          paramDesc: "适中的壁垒厚度(d=0.5)产生较弱但可检测的隧穿电流，这正是Giaever实验观察到的现象。",
+          action: { E: 0.8, V0: 2.5, d: 0.7, sigma: 0.5 },
+        },
+        {
+          year: "1980",
+          title: "闪存 Flash Memory",
+          desc: "利用 Fowler-Nordheim 隧穿效应将电子困在浮栅中，实现非易失性数据存储。",
+          icon: "💾",
+          details: "你现在使用的 U 盘和固态硬盘（SSD）都完全依赖量子隧穿！通过施加高电压，迫使电子隧穿过极薄的氧化物绝缘层，进入一个被完全绝缘包围的“浮栅”并被困住。撤去电压后，电子由于没有足够能量且势垒变厚无法逃逸，从而实现了数据的长期保存（记忆）。",
+          paramTitle: "模拟浮栅写入",
+          paramDesc: "设定一个宽而高的势垒代表厚氧化层（常态下电子无法逃逸）。高电压使氧化层上的势垒从矩形变为三角形（镜像电荷效应），有效势垒变薄，电子隧穿概率大幅提升——这就是Flash存储器的写入原理。",
+          action: { E: 1.2, V0: 4.0, d: 1.0, sigma: 0.5 },
+        },
+        {
+          year: "1981",
+          title: "扫描隧道显微镜 STM",
+          desc: "Binnig 和 Rohrer 利用隧穿电流对物体表面原子进行极其精确的成像。",
+          icon: "🔬",
+          details: "STM 的工作原理是：将一根极尖锐的金属探针靠近样品表面（相距零点几纳米）。根据量子隧穿理论，探针与样品间的隧穿电流对距离极为敏感（呈指数衰减关系）。只需改变 0.1nm 的距离，电流就会变化近 10 倍！这使得我们第一次真正“看”到了单个原子。",
+          paramTitle: "感受对距离的极端敏感",
+          paramDesc: "你可以微调势垒宽度 d（模拟探针距离），观察理论透射率 T 是如何呈指数剧烈变化的。",
+          action: { E: 1.5, V0: 4.5, d: 0.4, sigma: 0.5 },
+        },
+        {
+          year: "1999",
+          title: "超导量子比特 (Yasunobu Nakamura)",
+          desc: "首次实现超导量子比特的相干控制，拉开了现代固态量子计算的序幕。",
+          icon: "💻",
+          details: "利用基于约瑟夫森结（本质是量子隧穿）的「库珀对盒」，Yasunobu Nakamura 在 1999 年首次成功证明了超导量子比特的相干叠加态——这是现代固态量子计算的开端。此后经过近 20 年的工程积累，Google 于 2019 年利用 Sycamore 芯片实现了「量子霸权」演示，而 IBM、IQM 等机构也在持续推进超导量子计算机的实用化。所有这些超导量子计算机的核心计算单元，都是依赖量子隧穿效应的超导量子比特。",
+          paramTitle: "模拟量子态共振",
+          paramDesc: "调整势垒参数使得入射波与势垒产生共振透射，这在微观层面上与量子比特的状态控制有数学上的相似性。",
+          action: { E: 1.5, V0: 1.5, d: 0.4, sigma: 0.5 },
+        },
+        {
+          year: "2010s",
+          title: "量子生物学 (Quantum Biology)",
+          desc: "科学家发现量子隧穿在生物体内的酶催化反应甚至 DNA 突变中起着至关重要的作用。",
+          icon: "🧬",
+          details: "生命看似是经典的，但在微观尺度，温度波动下质子（氢离子）在酶活性位点或 DNA 碱基对之间的转移，极大程度上依赖于量子隧穿。这意味着生命的基本代谢过程，甚至某些自发性的基因突变（由于质子隧穿导致碱基配对错误），都与粒子穿越能量势垒的“幽灵”能力息息相关！",
+          paramTitle: "模拟厚重质子的隧穿",
+          paramDesc: "质子比电子重得多，隧穿概率极低。我们将势垒变宽，观察极小但确实存在的概率泄漏（这就是生命的量子本质）。",
+          action: { E: 1.0, V0: 2.5, d: 0.8, sigma: 0.4 },
+        },
+        {
+          year: "2023",
+          title: "阿秒物理与隧穿时间",
+          desc: "利用阿秒激光脉冲技术（2001年L'Huillier等人提出理论、2004年首次产生孤立阿秒脉冲，2023年获诺贝尔物理学奖），物理学家终于测出了电子隧穿所需的时间。",
+          icon: "⏱️",
+          details: "电子穿过势垒需要时间吗？利用“阿秒钟”（Attoclock）技术，科学家测量出电子在强激光场中隧穿原子势垒的时间延迟最多只有几十阿秒（1阿秒 = 10^-18 秒），甚至在某些理论定义下几乎是“瞬时”发生的。这把人类对量子隧穿的认知推向了极限的微观时间尺度！",
+          paramTitle: "宏观磁通量子隧穿",
+          paramDesc: "设定较窄的波包和极薄的势垒，拉动时间轴观察波包与势垒碰撞的瞬间。透射波在另一侧几乎是紧跟着出现的（延迟仅几十到几百阿秒），这就是阿秒钟技术测量的隧穿时间延迟。",
+          action: { E: 2.0, V0: 3.0, d: 0.2, sigma: 0.2 },
+        },
+        {
+          year: "2025",
+          title: "宏观量子隧穿诺贝尔奖",
+          desc: "2025 年诺贝尔物理学奖授予 Clarke、Devoret、Martinis，表彰在超导电路中实现宏观量子隧穿的突破性工作。",
+          icon: "🏆",
+          details: "John Clarke、Michel H. Devoret 和 John M. Martinis 因在超导量子电路中发现宏观量子隧穿和能量量子化而获奖。这是量子隧穿效应第一次在人类制造的宏观尺度人造结构中被观察到并得到应用，奠定了 Google Sycamore、IBM quantum 等超导量子计算机的物理基础。Martinis 在 Google 主导实现的量子霸权(quantum supremacy)正是利用了超导量子比特中的隧穿动力学。",
+          paramTitle: "宏观磁通量子隧穿",
+          paramDesc: "设置弱隧穿条件(E<V0, d=0.7)，模拟磁通量子在SQUID约瑟夫森结中的宏观隧穿——T≈0.25足以被实验观测。",
+          action: { E: 1.0, V0: 2.0, d: 0.7, sigma: 0.5 },
+        }
+    ];
+
+    function initTimeline() {
+        const nodesContainer = document.getElementById('timelineNodes');
+        nodesContainer.innerHTML = '';
+        
+        historyData.forEach((data, index) => {
+            const card = document.createElement('div');
+            card.className = `timeline-card ${index === 0 ? 'active' : ''}`;
+            card.innerHTML = `
+                <div class="timeline-year">${data.year}</div>
+                <div class="timeline-title">${data.title}</div>
+            `;
+            card.addEventListener('click', () => {
+                document.querySelectorAll('.timeline-card').forEach(c => c.classList.remove('active'));
+                card.classList.add('active');
+                card.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+                selectedHistoryNode = index;
+                renderHistoryDetail();
+            });
+            nodesContainer.appendChild(card);
+        });
+        
+        renderHistoryDetail();
+        timelineInitialized = true;
+    }
+
+    function renderHistoryDetail() {
+        const data = historyData[selectedHistoryNode];
+        const detailPanel = document.getElementById('historyDetailPanel');
+        const paramTip = document.getElementById('historyParamTip');
+        
+        detailPanel.innerHTML = `
+            <div class="history-detail-image">${data.icon}</div>
+            <div class="history-detail-title">${data.year} - ${data.title}</div>
+            <p>${data.desc}</p>
+            <button class="expand-btn" onclick="toggleHistoryDetails(this)">
+                了解更多 <span>▼</span>
+            </button>
+            <div class="expanded-content">
+                ${data.details}
+            </div>
+        `;
+        
+        paramTip.innerHTML = `
+            <div class="param-tip-title">💡 仿真关联：${data.paramTitle}</div>
+            <div class="param-tip-desc">${data.paramDesc}</div>
+            <button class="param-btn" onclick='applyHistoryParams(this, ${JSON.stringify(data.action)})'>应用此参数配置到仿真</button>
+        `;
+    }
+
+    window.toggleHistoryDetails = function(btn) {
+        const content = btn.nextElementSibling;
+        const icon = btn.querySelector('span');
+        if (content.style.display === 'block') {
+            content.style.display = 'none';
+            icon.textContent = '▼';
+        } else {
+            content.style.display = 'block';
+            icon.textContent = '▲';
+        }
+    };
+
+    window.applyHistoryParams = function(btn, params) {
+        if (btn.dataset.applied === "true") {
+            // 第2次点击：跳转到实时演化
+            document.getElementById('tabSim').click();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            
+            // 可选：重置按钮状态（如果用户再切回来，可以重新应用）
+            btn.dataset.applied = "false";
+            btn.textContent = '应用此参数配置到仿真';
+            btn.style.background = '';
+            return;
+        }
+
+        // 第1次点击：应用参数
+        if (isPlaying) {
+            isPlaying = false;
+            updatePlayPauseUI();
+        }
+        document.getElementById('eSlider').value = params.E;
+        document.getElementById('eValue').textContent = params.E.toFixed(1);
+        document.getElementById('v0Slider').value = params.V0;
+        document.getElementById('v0Value').textContent = params.V0.toFixed(1);
+        document.getElementById('dSlider').value = params.d;
+        document.getElementById('dValue').textContent = params.d.toFixed(2);
+        document.getElementById('sigmaSlider').value = params.sigma;
+        document.getElementById('sigmaValue').textContent = params.sigma.toFixed(1);
+        E = params.E; V0 = params.V0; d = params.d; sigma = params.sigma;
+        resetAndRender();
+        
+        // 更新按钮状态为“已应用”并提示再次点击跳转
+        btn.dataset.applied = "true";
+        btn.textContent = '已应用！再点一次查看动画';
+        btn.style.background = '#48bb78'; // 成功绿色
+    };
+
     function animationLoop() {
         if (isPlaying) {
             if (currentFrame < MAX_FRAMES) {
@@ -1678,18 +2297,35 @@
         currentTab = 'sim';
         document.getElementById('tabSim').classList.add('active');
         document.getElementById('tabData').classList.remove('active');
+        document.getElementById('tabHistory').classList.remove('active');
         document.getElementById('viewSim').classList.add('active');
         document.getElementById('viewData').classList.remove('active');
+        document.getElementById('viewHistory').classList.remove('active');
     });
 
     document.getElementById('tabData').addEventListener('click', () => {
         currentTab = 'data';
         document.getElementById('tabData').classList.add('active');
         document.getElementById('tabSim').classList.remove('active');
+        document.getElementById('tabHistory').classList.remove('active');
         document.getElementById('viewData').classList.add('active');
         document.getElementById('viewSim').classList.remove('active');
+        document.getElementById('viewHistory').classList.remove('active');
         renderStaticWave();
         renderChart();
+    });
+
+    document.getElementById('tabHistory').addEventListener('click', () => {
+        currentTab = 'history';
+        document.getElementById('tabHistory').classList.add('active');
+        document.getElementById('tabData').classList.remove('active');
+        document.getElementById('tabSim').classList.remove('active');
+        document.getElementById('viewHistory').classList.add('active');
+        document.getElementById('viewData').classList.remove('active');
+        document.getElementById('viewSim').classList.remove('active');
+        if (!timelineInitialized) {
+            initTimeline();
+        }
     });
 
     document.getElementById('chartVarSelect').addEventListener('change', renderChart);
