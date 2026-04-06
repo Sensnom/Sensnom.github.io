@@ -45,6 +45,69 @@
     let E = 1.5;
     let sigma = 0.5;
     const barrierCenter = 0.0;
+
+    const theoryFocusMeta = {
+        left: {
+            label: '左侧干涉',
+            explain: '区域 I 的解是 $Ae^{ikx} + Be^{-ikx}$。两个反向行波叠在一起，某些位置相长、某些位置相消，所以左边会出现干涉纹。'
+        },
+        barrier: {
+            label: '势垒内部',
+            explain: '区域 II 的解是 $Ce^{-\\kappa x} + De^{\\kappa x}$。这里发生的是 $k \\to i\\kappa$，所以原来的 $e^{ikx}$ 振荡解会改写成指数解。严格说，墙内呈指数衰减的是包络 $|\\psi|$。'
+        },
+        right: {
+            label: '右侧透射',
+            explain: '区域 III 的解只剩 $Fe^{ikx}$。这里只有向右传播的透射波，没有从右侧返回的分量，所以右边是一段更小但还在继续起伏的波。'
+        }
+    };
+
+    const theoryComponentMeta = {
+        all: {
+            explain: '先一起看最合适。蓝线和红线是复波函数的两个分量，灰色虚线是包络 $|\\psi|$。如果你想确认“墙内指数衰减”到底落在什么量上，就切到只看包络。'
+        },
+        real: {
+            explain: '实部不是概率，也不是完整波函数。它只是 $\\psi$ 在实轴上的投影，所以会振荡、会过零，看起来不像一条单独的衰减线。'
+        },
+        imag: {
+            explain: '虚部和实部地位一样，只是相位错开。把它单独拎出来看，你会看到同样的波动结构，只不过峰谷位置和蓝线不重合。'
+        },
+        env: {
+            explain: '包络 $|\\psi| = \\sqrt{(\\Re\\psi)^2 + (\\Im\\psi)^2}$ 才是这里最该盯住的量。墙内说的“指数衰减”，严格讲就是它在往下掉。'
+        }
+    };
+
+    const theoryScenes = {
+        tunnel: {
+            title: '场景 1：为什么墙里还有波？',
+            subtitle: '蓝线是实部，红线是虚部，灰色虚线是包络 $|\\psi|$。墙内真正呈指数衰减的是包络。',
+            focus: 'barrier',
+            calcLead: '先看墙内振幅怎么掉，再回头看这里的理论透射率。',
+            run() {
+                animateParamsTo(1.5, 3.0, 0.5);
+            }
+        },
+        width: {
+            title: '场景 2：为什么只加一点宽度，结果差很多？',
+            subtitle: '重点盯住灰色虚线包络和右侧透射波，看它们怎样一起掉下去。',
+            focus: 'right',
+            calcLead: '这次最值得盯的是 T 的数量级，因为宽度 d 正在决定衰减累计了多久。',
+            run() {
+                animateWidthSweep();
+            }
+        },
+        overBarrier: {
+            title: '场景 3：为什么翻过去了，还会反弹？',
+            subtitle: '把目光移回左边，看看高能情况下反射纹为什么还在。',
+            focus: 'left',
+            calcLead: '现在透射会明显变大，但左边的反射纹不会立刻消失，因为边界匹配仍在起作用。',
+            run() {
+                animateParamsTo(3.5, 3.0, 0.5);
+            }
+        }
+    };
+    let currentTheoryScene = 'tunnel';
+    let currentTheoryFocus = theoryScenes[currentTheoryScene].focus;
+    let currentTheoryComponent = 'all';
     
     // 交互状态
     // 数组
@@ -70,6 +133,106 @@
             re: (aRe * bRe + aIm * bIm) / denom,
             im: (aIm * bRe - aRe * bIm) / denom
         };
+    }
+
+    function syncParamDisplays() {
+        document.getElementById('v0Slider').value = V0;
+        document.getElementById('dSlider').value = d;
+        document.getElementById('eSlider').value = E;
+        document.getElementById('sigmaSlider').value = sigma;
+        document.getElementById('v0Value').textContent = V0.toFixed(1);
+        document.getElementById('dValue').textContent = d.toFixed(2);
+        document.getElementById('eValue').textContent = E.toFixed(1);
+        document.getElementById('sigmaValue').textContent = sigma.toFixed(1);
+    }
+
+    function updateTheoryNarrative() {
+        const scene = theoryScenes[currentTheoryScene];
+        const focus = theoryFocusMeta[currentTheoryFocus];
+        const component = theoryComponentMeta[currentTheoryComponent];
+        if (!scene || !focus || !component) return;
+
+        document.querySelectorAll('.theory-section-card').forEach(card => {
+            card.classList.toggle('active', card.dataset.scene === currentTheoryScene);
+        });
+
+        document.querySelectorAll('.theory-focus-btn').forEach(button => {
+            button.classList.toggle('active', button.dataset.focus === currentTheoryFocus);
+        });
+
+        document.querySelectorAll('.theory-component-btn').forEach(button => {
+            button.classList.toggle('active', button.dataset.component === currentTheoryComponent);
+        });
+
+        const titleEl = document.getElementById('theoryCanvasTitle');
+        const subtitleEl = document.getElementById('theoryCanvasSubtitle');
+        const focusTagEl = document.getElementById('theoryCanvasFocusTag');
+        const focusExplainEl = document.getElementById('theoryFocusExplain');
+        const componentExplainEl = document.getElementById('theoryComponentExplain');
+        const calcLeadEl = document.getElementById('theoryCalcLead');
+
+        if (titleEl) titleEl.textContent = scene.title;
+        if (subtitleEl) subtitleEl.textContent = scene.subtitle;
+        if (focusTagEl) focusTagEl.textContent = `当前焦点：${focus.label}`;
+        if (focusExplainEl) focusExplainEl.textContent = focus.explain;
+        if (componentExplainEl) componentExplainEl.textContent = component.explain;
+        if (calcLeadEl) calcLeadEl.textContent = scene.calcLead;
+
+        if (subtitleEl && window.renderMathInElement) {
+            renderMathInElement(subtitleEl, {
+                delimiters: [
+                    {left: '$$', right: '$$', display: true},
+                    {left: '$', right: '$', display: false}
+                ]
+            });
+        }
+
+        if (focusExplainEl && window.renderMathInElement) {
+            renderMathInElement(focusExplainEl, {
+                delimiters: [
+                    {left: '$$', right: '$$', display: true},
+                    {left: '$', right: '$', display: false}
+                ]
+            });
+        }
+
+        if (componentExplainEl && window.renderMathInElement) {
+            renderMathInElement(componentExplainEl, {
+                delimiters: [
+                    {left: '$$', right: '$$', display: true},
+                    {left: '$', right: '$', display: false}
+                ]
+            });
+        }
+    }
+
+    function setTheoryFocus(focusKey) {
+        if (!theoryFocusMeta[focusKey]) return;
+        currentTheoryFocus = focusKey;
+        updateTheoryNarrative();
+        if (currentTab === 'theory') {
+            renderTheoryNumerov();
+        }
+    }
+
+    function setTheoryScene(sceneKey) {
+        if (!theoryScenes[sceneKey]) return;
+        currentTheoryScene = sceneKey;
+        currentTheoryFocus = theoryScenes[sceneKey].focus;
+        updateTheoryNarrative();
+        if (currentTab === 'theory') {
+            updateTheoryCalc();
+            renderTheoryNumerov();
+        }
+    }
+
+    function setTheoryComponent(componentKey) {
+        if (!theoryComponentMeta[componentKey]) return;
+        currentTheoryComponent = componentKey;
+        updateTheoryNarrative();
+        if (currentTab === 'theory') {
+            renderTheoryNumerov();
+        }
     }
 
     function updatePotential() {
@@ -113,6 +276,7 @@
         updateTheoreticalTR();
         updateActualTR();
         updateTheoryCalc();
+        syncParamDisplays();
         
         stateHistory = [];
         currentTime = 0.0;
@@ -569,6 +733,11 @@
         // Numerov params
         const bLeft = getCanvasX(barrierCenter - d/2, width);
         const bRight = getCanvasX(barrierCenter + d/2, width);
+        const focusRects = {
+            left: { x: 0, width: bLeft },
+            barrier: { x: bLeft, width: bRight - bLeft },
+            right: { x: bRight, width: width - bRight }
+        };
         
         // Draw regions
         ctx.fillStyle = isDarkMode ? 'rgba(49, 130, 206, 0.1)' : 'rgba(49, 130, 206, 0.05)';
@@ -658,43 +827,92 @@
         const magA2 = AR*AR + AI*AI;
         
         const pR_tot = new Float64Array(N_stat);
+        const pI_tot = new Float64Array(N_stat);
+        const psiMag = new Float64Array(N_stat);
+        let maxMagTotal = 0;
         for(let i=0; i<N_stat; i++) {
             // (phi * A_conjugate) / |A|^2 => 得到总波并且入射波振幅归一化为1.0
             pR_tot[i] = (phiR[i]*AR + phiI[i]*AI) / magA2;
+            pI_tot[i] = (phiI[i]*AR - phiR[i]*AI) / magA2;
+            psiMag[i] = Math.sqrt(pR_tot[i]*pR_tot[i] + pI_tot[i]*pI_tot[i]);
+            if (psiMag[i] > maxMagTotal) maxMagTotal = psiMag[i];
         }
-        
-        // 缩放：以入射波振幅(1.0)为基准，加上反射波部分，预留充足的可视空间(通常驻波最大可达2.0)
-        // 使用一个固定的尺度来避免跳变
-        const scale = (height / 2 * 0.45); 
 
-        // Draw Wave
-        ctx.beginPath();
-        for (let i = 0; i < N_stat; i++) {
-            const x = xMinVisible + i * dx_stat;
-            const cx = getCanvasX(x, width);
-            const cy = height/2 - pR_tot[i] * scale;
-            if (i === 0) ctx.moveTo(cx, cy);
-            else ctx.lineTo(cx, cy);
+        const scale = (height * 0.42) / Math.max(maxMagTotal, 1.15);
+
+        function drawLine(dataArray, color, lineWidth) {
+            ctx.strokeStyle = color;
+            ctx.lineWidth = lineWidth;
+            ctx.lineJoin = 'round';
+            ctx.beginPath();
+            for (let i = 0; i < N_stat; i++) {
+                const x = xMinVisible + i * dx_stat;
+                const cx = getCanvasX(x, width);
+                const cy = height / 2 - dataArray[i] * scale;
+                if (i === 0) ctx.moveTo(cx, cy);
+                else ctx.lineTo(cx, cy);
+            }
+            ctx.stroke();
         }
-        
-        // Apply gradient for the line based on region
-        const grad = ctx.createLinearGradient(0, 0, width, 0);
-        const stop1 = Math.max(0, Math.min(1, bLeft/width));
-        const stop2 = Math.max(0, Math.min(1, bLeft/width + 0.001));
-        const stop3 = Math.max(0, Math.min(1, bRight/width));
-        const stop4 = Math.max(0, Math.min(1, bRight/width + 0.001));
-        
-        grad.addColorStop(0, isDarkMode ? '#63b3ed' : '#3182ce');
-        if (stop1 > 0 && stop1 < 1) grad.addColorStop(stop1, isDarkMode ? '#63b3ed' : '#3182ce');
-        if (stop2 > 0 && stop2 < 1) grad.addColorStop(stop2, isDarkMode ? '#fc8181' : '#e53e3e');
-        if (stop3 > 0 && stop3 < 1) grad.addColorStop(stop3, isDarkMode ? '#fc8181' : '#e53e3e');
-        if (stop4 > 0 && stop4 < 1) grad.addColorStop(stop4, isDarkMode ? '#68d391' : '#38a169');
-        grad.addColorStop(1, isDarkMode ? '#68d391' : '#38a169');
-        
-        ctx.strokeStyle = grad;
-        ctx.lineWidth = 2;
-        ctx.lineJoin = 'round';
-        ctx.stroke();
+
+        if (currentTheoryComponent === 'all' || currentTheoryComponent === 'env') {
+            // 严格来说，E < V0 时呈指数衰减的是包络 |psi|，不是单独某一条实部曲线。
+            ctx.save();
+            ctx.setLineDash([6, 4]);
+            ctx.strokeStyle = isDarkMode ? 'rgba(226, 232, 240, 0.5)' : 'rgba(45, 55, 72, 0.35)';
+            ctx.lineWidth = currentTheoryComponent === 'env' ? 1.9 : 1.4;
+            ctx.beginPath();
+            for (let i = 0; i < N_stat; i++) {
+                const x = xMinVisible + i * dx_stat;
+                const cx = getCanvasX(x, width);
+                const cy = height / 2 - psiMag[i] * scale;
+                if (i === 0) ctx.moveTo(cx, cy);
+                else ctx.lineTo(cx, cy);
+            }
+            for (let i = N_stat - 1; i >= 0; i--) {
+                const x = xMinVisible + i * dx_stat;
+                const cx = getCanvasX(x, width);
+                const cy = height / 2 + psiMag[i] * scale;
+                ctx.lineTo(cx, cy);
+            }
+            ctx.closePath();
+            ctx.stroke();
+            ctx.restore();
+        }
+
+        if (currentTheoryComponent === 'all' || currentTheoryComponent === 'imag') {
+            drawLine(pI_tot, isDarkMode ? 'rgb(252, 129, 129)' : 'rgb(204, 0, 0)', currentTheoryComponent === 'imag' ? 2.2 : 1.7);
+        }
+        if (currentTheoryComponent === 'all' || currentTheoryComponent === 'real') {
+            drawLine(pR_tot, isDarkMode ? 'rgb(99, 179, 237)' : 'rgb(0, 51, 204)', currentTheoryComponent === 'real' ? 2.3 : 1.9);
+        }
+
+        const activeFocusRect = focusRects[currentTheoryFocus];
+        if (activeFocusRect) {
+            const dimFill = isDarkMode ? 'rgba(15, 23, 42, 0.34)' : 'rgba(255, 255, 255, 0.44)';
+
+            ctx.save();
+            Object.entries(focusRects).forEach(([focusKey, rect]) => {
+                if (focusKey !== currentTheoryFocus && rect.width > 0) {
+                    ctx.fillStyle = dimFill;
+                    ctx.fillRect(rect.x, 0, rect.width, height);
+                }
+            });
+
+            ctx.strokeStyle = currentTheoryFocus === 'left'
+                ? (isDarkMode ? '#63b3ed' : '#3182ce')
+                : currentTheoryFocus === 'barrier'
+                    ? (isDarkMode ? '#fc8181' : '#e53e3e')
+                    : (isDarkMode ? '#68d391' : '#38a169');
+            ctx.lineWidth = 3;
+            ctx.strokeRect(
+                activeFocusRect.x + 1.5,
+                1.5,
+                Math.max(activeFocusRect.width - 3, 0),
+                height - 3
+            );
+            ctx.restore();
+        }
     }
 
     function renderStaticWave() {
@@ -1231,7 +1449,7 @@
     window.applyHistoryParams = function(btn, params) {
         if (btn.dataset.applied === "true") {
             // 第2次点击：跳转到实时演化
-            document.getElementById('tabSim').click();
+            activateTab('sim');
             window.scrollTo({ top: 0, behavior: 'smooth' });
             
             // 可选：重置按钮状态（如果用户再切回来，可以重新应用）
@@ -1246,15 +1464,8 @@
             isPlaying = false;
             updatePlayPauseUI();
         }
-        document.getElementById('eSlider').value = params.E;
-        document.getElementById('eValue').textContent = params.E.toFixed(1);
-        document.getElementById('v0Slider').value = params.V0;
-        document.getElementById('v0Value').textContent = params.V0.toFixed(1);
-        document.getElementById('dSlider').value = params.d;
-        document.getElementById('dValue').textContent = params.d.toFixed(2);
-        document.getElementById('sigmaSlider').value = params.sigma;
-        document.getElementById('sigmaValue').textContent = params.sigma.toFixed(1);
         E = params.E; V0 = params.V0; d = params.d; sigma = params.sigma;
+        syncParamDisplays();
         resetAndRender();
         
         // 更新按钮状态为“已应用”并提示再次点击跳转
@@ -1349,10 +1560,8 @@
         // 更改势垒参数后，截断由于旧势垒产生的历史数据
         stateHistory.length = currentFrame + 1;
         
-        document.getElementById('v0Value').textContent = V0.toFixed(1);
-        document.getElementById('dValue').textContent = d.toFixed(1);
-        document.getElementById('eValue').textContent = E.toFixed(1);
-        document.getElementById('sigmaValue').textContent = sigma.toFixed(1);
+        syncParamDisplays();
+        updateTheoryCalc();
         
         if (currentTab === 'data') {
             renderStaticWave();
@@ -1366,98 +1575,105 @@
     }
 
     let currentTab = 'sim';
+    let pipInitialized = false;
 
-    document.getElementById('tabSim').addEventListener('click', () => {
-        currentTab = 'sim';
-        document.getElementById('tabSim').classList.add('active');
-        document.getElementById('tabData').classList.remove('active');
-        document.getElementById('tabHistory').classList.remove('active');
-        document.getElementById('tabTheory').classList.remove('active');
-        document.getElementById('viewSim').classList.add('active');
-        document.getElementById('viewData').classList.remove('active');
-        document.getElementById('viewHistory').classList.remove('active');
-        document.getElementById('viewTheory').classList.remove('active');
-    });
+    const tabConfig = {
+        sim: { buttonId: 'tabSim', viewId: 'viewSim' },
+        data: { buttonId: 'tabData', viewId: 'viewData' },
+        history: { buttonId: 'tabHistory', viewId: 'viewHistory' },
+        theory: { buttonId: 'tabTheory', viewId: 'viewTheory' }
+    };
 
-    document.getElementById('tabData').addEventListener('click', () => {
-        currentTab = 'data';
-        document.getElementById('tabData').classList.add('active');
-        document.getElementById('tabSim').classList.remove('active');
-        document.getElementById('tabHistory').classList.remove('active');
-        document.getElementById('tabTheory').classList.remove('active');
-        document.getElementById('viewData').classList.add('active');
-        document.getElementById('viewSim').classList.remove('active');
-        document.getElementById('viewTheory').classList.remove('active');
-        document.getElementById('viewHistory').classList.remove('active');
-        renderStaticWave();
-        renderChart();
-    });
+    function ensureTheoryPiP() {
+        if (pipInitialized) return;
+        pipInitialized = true;
 
+        const theoryCanvasContainer = document.querySelector('.theory-canvas-container');
+        if (!theoryCanvasContainer) return;
 
-    document.getElementById('tabTheory').addEventListener('click', () => {
-        currentTab = 'theory';
-        document.getElementById('tabTheory').classList.add('active');
-        document.getElementById('tabHistory').classList.remove('active');
-        document.getElementById('tabData').classList.remove('active');
-        document.getElementById('tabSim').classList.remove('active');
-        document.getElementById('viewTheory').classList.add('active');
-        document.getElementById('viewHistory').classList.remove('active');
-        document.getElementById('viewData').classList.remove('active');
-        document.getElementById('viewSim').classList.remove('active');
-        updateTheoryCalc();
-        renderTheoryNumerov();
-    });
-    document.getElementById('tabHistory').addEventListener('click', () => {
-        currentTab = 'history';
-        document.getElementById('tabHistory').classList.add('active');
-        document.getElementById('tabData').classList.remove('active');
-        document.getElementById('tabSim').classList.remove('active');
-        document.getElementById('tabTheory').classList.remove('active');
-        document.getElementById('viewHistory').classList.add('active');
-        document.getElementById('viewData').classList.remove('active');
-        document.getElementById('viewSim').classList.remove('active');
-        document.getElementById('viewTheory').classList.remove('active');
-    });
+        const wrapper = document.createElement('div');
+        wrapper.className = 'theory-canvas-wrapper';
+        wrapper.style.position = 'relative';
 
-    document.getElementById('tabData').addEventListener('click', () => {
-        currentTab = 'data';
-        document.getElementById('tabData').classList.add('active');
-        document.getElementById('tabSim').classList.remove('active');
-        document.getElementById('tabHistory').classList.remove('active');
-        document.getElementById('viewData').classList.add('active');
-        document.getElementById('viewSim').classList.remove('active');
-        document.getElementById('viewTheory').classList.remove('active');
-        document.getElementById('viewHistory').classList.remove('active');
-        renderStaticWave();
-        renderChart();
-    });
+        theoryCanvasContainer.parentNode.insertBefore(wrapper, theoryCanvasContainer);
+        wrapper.appendChild(theoryCanvasContainer);
 
+        const checkPiP = () => {
+            const rect = wrapper.getBoundingClientRect();
+            if (rect.bottom < 0) {
+                if (!theoryCanvasContainer.classList.contains('pip-mode')) {
+                    wrapper.style.height = theoryCanvasContainer.offsetHeight + 'px';
+                    theoryCanvasContainer.classList.add('pip-mode');
+                }
+            } else if (theoryCanvasContainer.classList.contains('pip-mode')) {
+                theoryCanvasContainer.classList.remove('pip-mode');
+                wrapper.style.height = 'auto';
+            }
+        };
 
-    document.getElementById('tabTheory').addEventListener('click', () => {
-        currentTab = 'theory';
-        document.getElementById('tabTheory').classList.add('active');
-        document.getElementById('tabHistory').classList.remove('active');
-        document.getElementById('tabData').classList.remove('active');
-        document.getElementById('tabSim').classList.remove('active');
-        document.getElementById('viewTheory').classList.add('active');
-        document.getElementById('viewHistory').classList.remove('active');
-        document.getElementById('viewData').classList.remove('active');
-        document.getElementById('viewSim').classList.remove('active');
-        updateTheoryCalc();
-        renderTheoryNumerov();
-    });
-    document.getElementById('tabHistory').addEventListener('click', () => {
-        currentTab = 'history';
-        document.getElementById('tabHistory').classList.add('active');
-        document.getElementById('tabData').classList.remove('active');
-        document.getElementById('tabSim').classList.remove('active');
-        document.getElementById('viewHistory').classList.add('active');
-        document.getElementById('viewData').classList.remove('active');
-        document.getElementById('viewSim').classList.remove('active');
-        document.getElementById('viewTheory').classList.remove('active');
-        if (!timelineInitialized) {
-            initTimeline();
+        window.addEventListener('scroll', checkPiP, { passive: true });
+        window.addEventListener('resize', checkPiP, { passive: true });
+        checkPiP();
+    }
+
+    function activateTab(tabName) {
+        currentTab = tabName;
+
+        Object.entries(tabConfig).forEach(([key, config]) => {
+            document.getElementById(config.buttonId).classList.toggle('active', key === tabName);
+            document.getElementById(config.viewId).classList.toggle('active', key === tabName);
+        });
+
+        if (tabName === 'data') {
+            renderStaticWave();
+            renderChart();
+        } else if (tabName === 'history') {
+            if (!timelineInitialized) {
+                initTimeline();
+            }
+        } else if (tabName === 'theory') {
+            ensureTheoryPiP();
+            updateTheoryNarrative();
+            updateTheoryCalc();
+            renderTheoryNumerov();
         }
+    }
+
+    window.jumpToTab = function(tabName, chartVar) {
+        if (tabName === 'data' && chartVar) {
+            document.getElementById('chartVarSelect').value = chartVar;
+        }
+        activateTab(tabName);
+        const view = tabConfig[tabName] ? document.getElementById(tabConfig[tabName].viewId) : null;
+        if (view) {
+            view.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+    };
+
+    window.runTheoryScene = function(sceneKey) {
+        const scene = theoryScenes[sceneKey];
+        if (!scene) return;
+        activateTab('theory');
+        setTheoryScene(sceneKey);
+        scene.run();
+    };
+
+    ['sim', 'data', 'history', 'theory'].forEach(tabName => {
+        document.getElementById(tabConfig[tabName].buttonId).addEventListener('click', () => {
+            activateTab(tabName);
+        });
+    });
+
+    document.querySelectorAll('.theory-focus-btn').forEach(button => {
+        button.addEventListener('click', () => {
+            setTheoryFocus(button.dataset.focus);
+        });
+    });
+
+    document.querySelectorAll('.theory-component-btn').forEach(button => {
+        button.addEventListener('click', () => {
+            setTheoryComponent(button.dataset.component);
+        });
     });
 
     document.getElementById('chartVarSelect').addEventListener('change', renderChart);
@@ -1492,18 +1708,15 @@
             E = startE + (targetE - startE) * ease;
             V0 = startV0 + (targetV0 - startV0) * ease;
             d = startD + (targetD - startD) * ease;
-            
-            document.getElementById('eSlider').value = E;
-            document.getElementById('eValue').textContent = E.toFixed(1);
-            document.getElementById('v0Slider').value = V0;
-            document.getElementById('v0Value').textContent = V0.toFixed(1);
-            document.getElementById('dSlider').value = d;
-            document.getElementById('dValue').textContent = d.toFixed(2);
+            syncParamDisplays();
             
             updateTheoreticalTR();
             updateTheoryCalc();
-            if(currentTab === 'data') renderStaticWave();
-            if(currentTab === 'theory') renderTheoryNumerov();
+            if (currentTab === 'data') {
+                renderStaticWave();
+                renderChart();
+            }
+            if (currentTab === 'theory') renderTheoryNumerov();
             renderEnergy(document.getElementById('energyCanvas').getContext('2d'), 800, 100);
             
             if (progress < 1) {
@@ -1529,7 +1742,7 @@
     };
 
     window.jumpToHistoryNode = function(index) {
-        document.getElementById('tabHistory').click();
+        activateTab('history');
         setTimeout(() => {
             const cards = document.querySelectorAll('.timeline-card');
             if (cards && cards[index]) {
@@ -1538,59 +1751,23 @@
         }, 50);
     };
 
-            
-    // --- PiP (Picture in Picture) for Theory Canvas on Mobile ---
-    let pipInitialized = false;
-    document.getElementById('tabTheory').addEventListener('click', () => {
-        if (pipInitialized) return;
-        pipInitialized = true;
-        
-        const theoryCanvasContainer = document.querySelector('.theory-canvas-container');
-        if (!theoryCanvasContainer) return;
-        
-        const wrapper = document.createElement('div');
-        wrapper.className = 'theory-canvas-wrapper';
-        wrapper.style.position = 'relative';
-        
-        theoryCanvasContainer.parentNode.insertBefore(wrapper, theoryCanvasContainer);
-        wrapper.appendChild(theoryCanvasContainer);
-        
-        const checkPiP = () => {
-            // Desktop and mobile both get PiP!
-            
-            // Check if wrapper has scrolled out of view (above viewport)
-            const rect = wrapper.getBoundingClientRect();
-            if (rect.bottom < 0) {
-                if (!theoryCanvasContainer.classList.contains('pip-mode')) {
-                    wrapper.style.height = theoryCanvasContainer.offsetHeight + 'px';
-                    theoryCanvasContainer.classList.add('pip-mode');
-                }
-            } else {
-                if (theoryCanvasContainer.classList.contains('pip-mode')) {
-                    theoryCanvasContainer.classList.remove('pip-mode');
-                    wrapper.style.height = 'auto';
-                }
-            }
-        };
-        
-        window.addEventListener('scroll', checkPiP, { passive: true });
-        window.addEventListener('resize', checkPiP, { passive: true });
-    });
-
     
     window.updateTheoryCalc = function() {
         const e_val = E;
         const v0_val = V0;
         const d_val = d;
+        const scene = theoryScenes[currentTheoryScene];
         
         const elE = document.getElementById('theoryCalcE');
         const elV0 = document.getElementById('theoryCalcV0');
         const elD = document.getElementById('theoryCalcD');
+        const leadEl = document.getElementById('theoryCalcLead');
         if(!elE) return;
         
         elE.textContent = e_val.toFixed(2);
         elV0.textContent = v0_val.toFixed(2);
         elD.textContent = d_val.toFixed(2);
+        if (leadEl && scene) leadEl.textContent = scene.calcLead;
         
         const resultContainer = document.getElementById('theoryCalcResult');
         
@@ -1609,19 +1786,19 @@
             // 如果模式改变，或首次渲染，进行完整DOM与KaTeX渲染
             if (newMode === 'tunnel') {
                 resultContainer.innerHTML = `
-                    <div style="margin-bottom:12px; font-size: 1.3rem; font-weight: bold; color: #3182ce;" class="theme-color-mode-1">$E < V_0$ (隧穿模式)</div>
+                    <div style="margin-bottom:12px; font-size: 1.3rem; font-weight: bold; color: #3182ce;" class="theme-color-mode-1">当前处于隧穿区：$E < V_0$</div>
                     <div style="font-size:14px; font-weight:normal; margin-bottom:8px;">衰减常数 $\\kappa = \\frac{\\sqrt{2m(V_0 - E)}}{\\hbar} \\approx$ <span class="dynamic-k"></span> $\\text{nm}^{-1}$</div>
                     理论透射率 $T =$ <span class="dynamic-t"></span> (<span class="dynamic-tp"></span>)
                 `;
             } else if (newMode === 'critical') {
                 resultContainer.innerHTML = `
-                    <div style="margin-bottom:12px; font-size: 1.3rem; font-weight: bold; color: #d69e2e;" class="theme-color-mode-2">$E \\approx V_0$ (临界模式)</div>
+                    <div style="margin-bottom:12px; font-size: 1.3rem; font-weight: bold; color: #d69e2e;" class="theme-color-mode-2">当前接近临界区：$E \\approx V_0$</div>
                     理论透射率 $T =$ <span class="dynamic-t"></span> (<span class="dynamic-tp"></span>)
                 `;
             } else {
                 resultContainer.innerHTML = `
-                    <div style="margin-bottom:12px; font-size: 1.3rem; font-weight: bold; color: #38a169;" class="theme-color-mode-3">$E > V_0$ (势垒上方反射)</div>
-                    <div style="font-size:14px; font-weight:normal; margin-bottom:8px;">动能大于势能时粒子仍表现出波的干涉反射</div>
+                    <div style="margin-bottom:12px; font-size: 1.3rem; font-weight: bold; color: #38a169;" class="theme-color-mode-3">当前处于越垒区：$E > V_0$</div>
+                    <div style="font-size:14px; font-weight:normal; margin-bottom:8px;">透射已经增强，但边界匹配仍会留下反射干涉。</div>
                     理论透射率 $T =$ <span class="dynamic-t"></span> (<span class="dynamic-tp"></span>)
                 `;
             }
@@ -1802,6 +1979,7 @@
     // 初始化
     window.addEventListener('load', () => {
         initSimulation();
+        updateTheoryNarrative();
         animationId = requestAnimationFrame(animationLoop);
 
         

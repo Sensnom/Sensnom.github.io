@@ -114,77 +114,137 @@
 
                 <div id="viewTheory" class="view-container">
                     <div class="theory-panel">
-                        <h2>一、定态薛定谔方程与波函数</h2>
-                        <p>量子隧穿现象的核心在于微观粒子的波动性，其一维稳态由定态薛定谔方程描述：</p>
-                        <div class="math-block">$$ -\frac{\hbar^2}{2m} \frac{d^2\psi(x)}{dx^2} + V(x)\psi(x) = E\psi(x) $$</div>
-                        <p>为了直观理解，我们把空间分为三个区域（如<strong>下方动态示意图</strong>所示）。定态薛定谔方程在各区域的解表现出截然不同的行为：</p>
-                        <div class="math-block">
-                            $$
-                            \begin{aligned}
-                            & \text{区域 I (入射与反射):} & \psi_I(x) &= \color{#3182ce}{A e^{ik_1x} + B e^{-ik_1x}} \\
-                            & \text{区域 II (势垒内部):} & \psi_{II}(x) &= \color{#e53e3e}{C e^{-\kappa x} + D e^{\kappa x}} & \left( \kappa = \frac{\sqrt{2m(V_0 - E)}}{\hbar} \right) \\
-                            & \text{区域 III (透射出去):} & \psi_{III}(x) &= \color{#38a169}{F e^{ik_1x}} & \left( k_1 = \frac{\sqrt{2mE}}{\hbar} \right)
-                            \end{aligned}
-                            $$
+                        <div class="theory-header">
+                            <div class="theory-eyebrow">原理解析 / 看图说理</div>
+                            <h2>图像为什么会长成这样?</h2>
+                            <p class="theory-lead">这张定态图会一直跟着你。每点一个场景，参数都会缓慢变化，你只需要盯住左侧干涉、墙内衰减和右侧透射是怎么一起变的。</p>
                         </div>
-                        
-                        <h3 style="color:#2b6cb0; margin-top: 40px; margin-bottom: 15px; border-bottom: 1px solid #e2e8f0; padding-bottom: 8px;">🎛️ 定态波函数实部 (严谨数值积分求解)</h3>
-                        <p>结合上述三大区域的理论，下方是我们使用严密的<strong>边界条件匹配数值积分法 (Numerov法)</strong> 实时计算出的稳态波函数实部 $\text{Re}(\psi)$。通过这个严谨的解，你可以直观地观察到波函数在<strong>区域 I (驻波干涉)</strong>、<strong>区域 II (平滑的指数衰减)</strong> 以及 <strong>区域 III (微弱透射波)</strong> 之间，不仅函数值连续，其<strong>斜率(一阶导数)也是完美连续的</strong>。</p>
-                        
+
                         <div class="canvas-container theory-canvas-container sticky-theory-canvas">
-                            <div class="canvas-label theory-canvas-label" style="background: #f8fafc; padding: 10px 15px; border-bottom: 1px solid #e2e8f0; color: #4a5568; font-weight: bold; font-size: 0.95rem; display: flex; justify-content: space-between;">
-                                <span>稳态波函数实部 $\text{Re}(\psi)$ - 数值精确解</span>
-                                <span style="font-weight:normal; font-size: 0.85rem; color:#a0aec0;">拖动右侧滑块实时观察波的形变</span>
+                            <div class="canvas-label theory-canvas-label">
+                                <div class="theory-canvas-heading">
+                                    <span id="theoryCanvasTitle">场景 1：为什么墙里还有波？</span>
+                                    <span id="theoryCanvasSubtitle">蓝线是实部，红线是虚部，灰色虚线是包络 $|\psi|$。墙内真正呈指数衰减的是包络。</span>
+                                </div>
+                                <span class="theory-canvas-focus-pill" id="theoryCanvasFocusTag">当前焦点：势垒内部</span>
                             </div>
                             <canvas id="theoryNumerovCanvas" width="800" height="220" style="display: block; width: 100%; height: auto;"></canvas>
                         </div>
 
-                        <p>由于波函数在势垒内部是平滑衰减且不会立刻降为零，因此粒子有一定概率“渗透”到势垒的另一侧，这正是量子隧穿的数学本质。</p>
+                        <div class="theory-focus-bar" id="theoryFocusBar">
+                            <span class="theory-focus-label">当前看图重点</span>
+                            <button class="theory-focus-btn active" data-focus="barrier">墙内衰减</button>
+                            <button class="theory-focus-btn" data-focus="left">左侧干涉</button>
+                            <button class="theory-focus-btn" data-focus="right">右侧透射</button>
+                        </div>
+                        <div class="theory-focus-explain" id="theoryFocusExplain">区域 II 的解是 $Ce^{-\kappa x} + De^{\kappa x}$。这里发生的是 $k \to i\kappa$，所以原来的 $e^{ikx}$ 振荡解会改写成指数解。严格说，墙内呈指数衰减的是包络 $|\psi|$。</div>
 
-                        <div class="tutorial-card">
-                            <h4>🕹️ 动手实验 1：见证“穿墙术” (E < V₀)</h4>
-                            <p style="margin-bottom: 8px;">理论上，经典粒子遇到比自己能量高的墙壁会被100%反弹，但薛定谔方程告诉我们：势垒内的波函数并没有归零！点击下方按钮，我们将粒子能量设为 <strong>1.5 eV</strong>，势垒高度设为 <strong>3.0 eV</strong>，看看右上方的动画和图表里发生了什么：</p>
-                            <button class="tutorial-action-btn" onclick="animateParamsTo(1.5, 3.0, 0.5)">
-                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
-                                运行此实验 (观察红色指数衰减)
-                            </button>
+                        <div class="theory-component-bar" id="theoryComponentBar">
+                            <span class="theory-focus-label">看哪条线</span>
+                            <button class="theory-component-btn active" data-component="all">一起看</button>
+                            <button class="theory-component-btn" data-component="real">只看实部</button>
+                            <button class="theory-component-btn" data-component="imag">只看虚部</button>
+                            <button class="theory-component-btn" data-component="env">只看包络</button>
+                        </div>
+                        <div class="theory-component-explain" id="theoryComponentExplain">先一起看最合适。蓝线和红线是复波函数在两个方向上的投影，灰色虚线是包络 $|\psi|$。如果你想确认“墙内指数衰减”到底落在什么量上，就切到只看包络。</div>
+
+                        <div class="theory-region-grid">
+                            <div class="theory-region-card region-left">
+                                <div class="theory-region-title">区域 I：入射 + 反射</div>
+                                <div class="math-block">$$ \psi_I(x)=Ae^{ikx}+Be^{-ikx} $$</div>
+                                <p>这里有两股方向相反的行波。它们叠在一起，某些位置相长、某些位置相消，所以左边看起来不是单一正弦，而是一串干涉纹。</p>
+                            </div>
+                            <div class="theory-region-card region-barrier">
+                                <div class="theory-region-title">区域 II：势垒内部</div>
+                                <div class="math-block">$$ \psi_{II}(x)=Ce^{-\kappa x}+De^{\kappa x} $$</div>
+                                <p>一旦 $E &lt; V_0$，原来区域里的波数 $k=\sqrt{2m(E-V)}/\hbar$ 会变成纯虚数 $i\kappa$。于是 $e^{ikx}$ 不再表示振荡，而会改写成指数项。严格说，明显单调掉下去的是包络 $|\psi|$。</p>
+                            </div>
+                            <div class="theory-region-card region-right">
+                                <div class="theory-region-title">区域 III：透射出去</div>
+                                <div class="math-block">$$ \psi_{III}(x)=Fe^{ikx} $$</div>
+                                <p>右侧只保留向右传播的透射波，没有从右边打回来的分量，所以它还是会振荡，只是振幅明显更小。</p>
+                            </div>
+                        </div>
+                        <div class="theory-boundary-note">这三段不是硬拼出来的。真正决定曲线怎么接上的，是两条边界条件：<strong>波函数本身要连续</strong>，而且<strong>一阶导数也要连续</strong>。所以图上不会在边界处突然断掉，而会平滑地从“干涉纹”过渡到“包络衰减”，再接到右侧透射波。</div>
+
+                        <div class="theory-scene-list">
+                            <section class="theory-section-card active" id="theorySceneTunnel" data-scene="tunnel">
+                                <div class="theory-scene-meta">场景 1</div>
+                                <h3>为什么墙里还有波？</h3>
+                                <p class="theory-observe">先把粒子能量压到墙高以下。看三件事：左边为什么出现更大的起伏，墙里为什么没直接归零，右边为什么还能接出一小段透射波。</p>
+                                <div class="theory-actions">
+                                    <button class="tutorial-action-btn" onclick="runTheoryScene('tunnel')">
+                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                                        切到 E &lt; V₀，看墙内衰减
+                                    </button>
+                                    <button class="theory-link-btn" onclick="jumpToTab('sim')">去实时演化看波包分裂</button>
+                                </div>
+                                <div class="theory-explain-box">
+                                    <p><strong>区域 I 对应 $Ae^{ikx}+Be^{-ikx}$</strong>。两个反向行波同时存在，所以左边天然会出现一串干涉峰谷。</p>
+                                    <p><strong>区域 II 对应 $Ce^{-\kappa x}+De^{\kappa x}$</strong>。这里真正发生的事是 $k \to i\kappa$，所以原来的 $e^{ikx}$ 型振荡解被改写成指数解。严格说，明显单调掉下去的是包络 $|\psi|$，不是单独某一条实部曲线。</p>
+                                    <p><strong>区域 III 对应 $Fe^{ikx}$</strong>。右边只剩向右传播的透射波，因此还会继续起伏，但振幅已经被前面的衰减压得很小。</p>
+                                </div>
+                                <div class="theory-formula-note">
+                                    <div class="theory-formula-title">公式只负责确认</div>
+                                    <div class="math-block">$$ -\frac{\hbar^2}{2m} \frac{d^2\psi(x)}{dx^2} + V(x)\psi(x) = E\psi(x) $$</div>
+                                    <p>当 $E &lt; V_0$ 时，势垒内部的解会变成指数型，所以你应该看灰色虚线包络怎样平滑掉下去，而不是要求某一条实部或虚部单独变成一条纯指数线。</p>
+                                </div>
+                            </section>
+
+                            <section class="theory-section-card" id="theorySceneWidth" data-scene="width">
+                                <div class="theory-scene-meta">场景 2</div>
+                                <h3>为什么只加一点宽度，结果差很多？</h3>
+                                <p class="theory-observe">这次别先看左边，直接盯住墙内和右侧。只把势垒宽度从 0.3nm 慢慢拉到 0.8nm，观察透射波幅度和理论透射率怎么一起掉下去。</p>
+                                <div class="theory-actions">
+                                    <button class="tutorial-action-btn" style="background:#38a169;" onclick="runTheoryScene('width')">
+                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                                        动态拉长势垒，看透射暴跌
+                                    </button>
+                                    <button class="theory-link-btn" onclick="jumpToTab('data', 'd')">去参数关系看 T-d 曲线</button>
+                                </div>
+                                <div class="theory-explain-box">
+                                    <p>既然墙里走的是 $e^{-\kappa x}$ 这一类指数衰减解，那么粒子在势垒里每多走一点，包络 $|\psi|$ 都会再乘上一段衰减因子。</p>
+                                    <p>所以<strong>宽度不是多一点点距离</strong>，而是让衰减持续得更久。墙越宽，能穿到右边的那一小段波就越弱。</p>
+                                    <p>这也是 STM、Flash 这类器件为什么会对纳米级距离变化极端敏感。</p>
+                                </div>
+                                <div class="theory-formula-note">
+                                    <div class="theory-formula-title">公式只负责确认</div>
+                                    <div class="math-block">$$ T \approx 16 \frac{E}{V_0}\left(1 - \frac{E}{V_0}\right)e^{-2\kappa d} $$</div>
+                                    <p>真正让人“肉眼感觉离谱”的是这个指数项 $e^{-2\kappa d}$。宽度 $d$ 不是线性惩罚，而是在指数里不断累计衰减。</p>
+                                </div>
+                            </section>
+
+                            <section class="theory-section-card" id="theorySceneOverBarrier" data-scene="overBarrier">
+                                <div class="theory-scene-meta">场景 3</div>
+                                <h3>为什么翻过去了，还会反弹？</h3>
+                                <p class="theory-observe">把能量拉到高于墙高，再回头看左边。你会发现右边透射明显增强了，但左边的干涉纹并没有完全消失。</p>
+                                <div class="theory-actions">
+                                    <button class="tutorial-action-btn" style="background:#d69e2e;" onclick="runTheoryScene('overBarrier')">
+                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                                        切到 E &gt; V₀，看左侧反射
+                                    </button>
+                                    <button class="theory-link-btn" onclick="jumpToTab('sim')">去实时演化看高能碰墙</button>
+                                </div>
+                                <div class="theory-explain-box">
+                                    <p>能量高于势垒后，墙内和右侧都会重新回到振荡解；但只要边界还在，波函数和导数就仍然要做连续匹配。</p>
+                                    <p>这个匹配通常会把左侧解拆成 $Ae^{ikx}+Be^{-ikx}$ 两部分：前者继续向右冲，后者被折回左边，所以左边仍会保留反射纹。</p>
+                                    <p>这也是为什么你在实时演化图里会看到“多数过去了，但仍有一部分被打回来”。</p>
+                                </div>
+                                <div class="theory-formula-note">
+                                    <div class="theory-formula-title">公式只负责确认</div>
+                                    <div class="math-block">$$ T = \frac{1}{1 + \frac{V_0^2}{4E(E - V_0)} \sin^2(k_2 d)} $$</div>
+                                    <p>只要边界匹配还在起作用，透射系数就不一定是 1。也就是说，<strong>E &gt; V₀ 仍然允许反射</strong>，只是图像形状从“墙内衰减”为主，变成“界面反射”为主。</p>
+                                </div>
+                            </section>
                         </div>
 
-
-                        <h2>二、一维矩形势垒的隧穿概率</h2>
-                        <p>对于本仿真中演示的宽度为 $d$、高度为 $V_0$ 的势垒，通过边界条件（波函数及其一阶导数在边界处连续），可推导出理论的透射系数 $T$ 解析解：</p>
-                        <div class="math-block">$$ T = \frac{1}{1 + \frac{V_0^2}{4E(V_0 - E)} \sinh^2(\kappa d)} $$</div>
-                        <p>当势垒很厚或很高时（即 $\kappa d \gg 1$），可以做进一步近似（$\sinh(x) \approx \frac{1}{2}e^x$）：</p>
-                        <div class="math-block">$$ T \approx 16 \frac{E}{V_0}\left(1 - \frac{E}{V_0}\right) e^{-2\kappa d} $$</div>
-                        <p>由此可见，<strong>隧穿概率 $T$ 对势垒宽度 $d$ 呈极度敏感的指数级依赖</strong>（$e^{-2\kappa d}$）。<button class="link-btn" onclick="jumpToHistoryNode(12)">扫描隧道显微镜(STM)</button>能够达到亚埃级空间分辨率，正是利用了微观电流对探针距离的这种极端敏感性。</p>
-
-                        <div class="tutorial-card">
-                            <h4>🕹️ 动手实验 2：对距离的极端敏感 (STM原理)</h4>
-                            <p style="margin-bottom: 8px;">根据公式，透射率 $T \propto e^{-2\kappa d}$，这意味着<strong>势垒厚度哪怕改变一丁点，隧穿概率都会呈指数级暴跌</strong>！这就是 STM 显微镜能分辨单个原子的原因。点击下方按钮，我们将势垒宽度 $d$ 从 <strong>0.3 nm</strong> 缓慢拉长到 <strong>0.8 nm</strong>，请死死盯住下方计算器的【理论透射率】和绿色的透射波幅度：</p>
-                            <button class="tutorial-action-btn" style="background:#38a169;" onclick="animateWidthSweep()">
-                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-                                动态拉伸势垒宽度 (观察T值的暴跌)
-                            </button>
+                        <div class="theory-side-note">
+                            <strong>继续往现实器件想：</strong>如果势垒不是规则矩形，而是缓慢变化的形状，WKB 近似仍然保留同一条直觉: 粒子每穿过一小段禁区都会继续衰减，整段衰减累计起来，就会得到 STM 和 Flash 那种对距离/电场极端敏感的结果。
                         </div>
 
-
-                        <h2>三、WKB 近似法</h2>
-                        <p>对于任意连续变化形状的势垒 $V(x)$（例如真实半导体PN结的内建电场），只要其势能变化相对德布罗意波长较平缓，就可以使用 <button class="link-btn" onclick="jumpToHistoryNode(2)">WKB近似 (1926)</button> 来估算整体隧穿概率：</p>
-                        <div class="math-block">$$ T \approx \exp\left( -2 \int_{x_1}^{x_2} \frac{\sqrt{2m(V(x) - E)}}{\hbar} dx \right) $$</div>
-                        <p>在这个公式里，整个不规则势垒区域被分割成了无数个无限薄的微小矩形势垒并进行积分。通过计算发现，强加外部高压电场能够将有效势垒变成极陡的“三角形”，从而大幅缩减积分区域的宽度 $x_2-x_1$，这一效应正是如今 <button class="link-btn" onclick="jumpToHistoryNode(11)">闪存(Flash)芯片写入数据</button>的底层原理。</p>
-
-                        <div class="tutorial-card">
-                            <h4>🕹️ 动手实验 3：飞跃势垒也有反弹？(E > V₀)</h4>
-                            <p style="margin-bottom: 8px;">经典力学认为：如果跑得足够快（能量大于墙高），翻过去是必然的。但量子力学表明：<strong>波在折射率（势能）发生变化的界面上，必定会产生反射！</strong>这就像光穿过玻璃时表面会反光一样。点击按钮，让粒子能量设为 <strong>3.5 eV</strong>（高于 3.0 eV的墙）：</p>
-                            <button class="tutorial-action-btn" style="background:#d69e2e;" onclick="animateParamsTo(3.5, 3.0, 0.5)">
-                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-                                飞越势垒 (观察上方黄色的干涉波)
-                            </button>
-                        </div>
-
-
-                        <div class="interactive-calc">
-                            <h3 >🧮 实时仿真公式计算</h3>
+                        <div class="interactive-calc theory-calc-card">
+                            <h3>🧮 数值确认：你刚刚看到的图，对应的量是多少？</h3>
+                            <p class="calc-desc" id="theoryCalcLead">先看墙内振幅怎么掉，再回头看这里的理论透射率。</p>
                             <p class="calc-desc">结合当前仿真器正在运行的物理参数（仿真内部的相对单位制，$\hbar \approx 0.658$, $m \approx 5.686$）：</p>
                             <div class="calc-grid">
                                 <div class="calc-item">
@@ -201,7 +261,7 @@
                                 </div>
                             </div>
                             <div id="theoryCalcResult" ></div>
-                            <div class="calc-hint">（你可以回到【实时演化】面板拖动滑块，再回来看此处的实时计算结果）</div>
+                            <div class="calc-hint">你可以在这里确认数量级，再回到【实时演化】或【参数关系】继续盯图像变化。</div>
                         </div>
                     </div>
                 </div>

@@ -1160,15 +1160,15 @@
 
         /* 原理解析专属样式 */
         .theory-panel {
-            max-width: 900px;
+            max-width: 920px;
             margin: 0 auto;
             padding: 40px;
             background: #ffffff;
             border-radius: 16px;
             box-shadow: 0 10px 30px rgba(0,0,0,0.05);
             color: #2d3748;
-            line-height: 1.8;
-            font-size: 1.05rem;
+            line-height: 1.75;
+            font-size: 1.02rem;
         }
         .dark-mode .static-controls { background: #0f172a !important; border-color: #334155 !important; }
         .dark-mode #staticWaveCanvas { border-color: #334155 !important; }
@@ -1177,34 +1177,57 @@
             color: #e2e8f0;
             box-shadow: 0 10px 30px rgba(0,0,0,0.2);
         }
+        .theory-header {
+            margin-bottom: 24px;
+        }
+        .theory-eyebrow {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 4px 10px;
+            border-radius: 999px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: #2b6cb0;
+            background: rgba(66, 153, 225, 0.12);
+            margin-bottom: 14px;
+        }
+        .dark-mode .theory-eyebrow {
+            color: #90cdf4;
+            background: rgba(144, 205, 244, 0.12);
+        }
         .theory-panel h2 {
             color: #2b6cb0;
-            font-size: 1.5rem;
-            margin: 40px 0 20px;
-            padding-bottom: 10px;
-            border-bottom: 2px solid #edf2f7;
-            font-weight: 700;
-        }
-        .theory-panel h2:first-child {
-            margin-top: 0;
+            font-size: 1.7rem;
+            margin: 0 0 12px;
+            font-weight: 800;
+            line-height: 1.35;
         }
         .dark-mode .theory-panel h2 {
             color: #90cdf4;
-            border-bottom-color: #334155;
+        }
+        .theory-lead {
+            margin: 0;
+            color: #4a5568;
+            max-width: 720px;
+        }
+        .dark-mode .theory-lead {
+            color: #cbd5e1;
         }
         .theory-panel p {
-            margin-bottom: 18px;
-            text-align: justify;
+            margin-bottom: 14px;
         }
         .math-block {
             background: #f8fafc;
             padding: 16px 20px;
             border-radius: 10px;
             border-left: 5px solid #4299e1;
-            margin: 20px 0;
+            margin: 16px 0;
             overflow-x: auto;
             text-align: center;
-            font-size: 1.0rem;
+            font-size: 1rem;
             box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);
         }
         .dark-mode .math-block {
@@ -1239,13 +1262,362 @@
             background: #3182ce;
             color: white;
         }
-        
+        .theory-canvas-label {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            background: #f8fafc;
+            padding: 12px 15px;
+            border-bottom: 1px solid #e2e8f0;
+            color: #4a5568;
+            font-weight: 700;
+            font-size: 0.95rem;
+        }
+        .theory-canvas-heading {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .theory-canvas-heading span:last-child {
+            font-weight: 500;
+            font-size: 0.86rem;
+            color: #718096;
+        }
+        .theory-canvas-focus-pill {
+            flex-shrink: 0;
+            padding: 6px 10px;
+            border-radius: 999px;
+            background: rgba(66, 153, 225, 0.12);
+            color: #2b6cb0;
+            font-size: 0.82rem;
+            font-weight: 700;
+        }
+        .dark-mode .theory-canvas-heading span:last-child {
+            color: #a0aec0;
+        }
+        .dark-mode .theory-canvas-focus-pill {
+            background: rgba(144, 205, 244, 0.14);
+            color: #90cdf4;
+        }
+        .theory-region-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 14px;
+            margin: 18px 0 20px;
+        }
+        .theory-region-card {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 16px;
+            padding: 16px;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .theory-region-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 18px rgba(15, 23, 42, 0.08);
+        }
+        .theory-region-card .math-block {
+            margin: 12px 0;
+            font-size: 0.92rem;
+        }
+        .theory-region-title {
+            font-size: 1rem;
+            font-weight: 800;
+            margin-bottom: 4px;
+        }
+        .region-left .theory-region-title { color: #2b6cb0; }
+        .region-barrier .theory-region-title { color: #c53030; }
+        .region-right .theory-region-title { color: #2f855a; }
+        .dark-mode .theory-region-card {
+            background: #0f172a;
+            border-color: #334155;
+        }
+        .dark-mode .theory-region-card:hover {
+            box-shadow: 0 10px 18px rgba(0,0,0,0.25);
+        }
+        .dark-mode .region-left .theory-region-title { color: #90cdf4; }
+        .dark-mode .region-barrier .theory-region-title { color: #fc8181; }
+        .dark-mode .region-right .theory-region-title { color: #68d391; }
+        .theory-boundary-note {
+            margin-bottom: 18px;
+            padding: 14px 16px;
+            border-radius: 14px;
+            background: rgba(255, 247, 237, 0.9);
+            border: 1px solid rgba(237, 137, 54, 0.22);
+            color: #9c4221;
+        }
+        .dark-mode .theory-boundary-note {
+            background: rgba(124, 45, 18, 0.22);
+            border-color: rgba(251, 146, 60, 0.24);
+            color: #fdba74;
+        }
+        .theory-focus-bar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: center;
+            margin: 26px 0 12px;
+        }
+        .theory-focus-label {
+            font-size: 0.92rem;
+            font-weight: 700;
+            color: #4a5568;
+        }
+        .dark-mode .theory-focus-label {
+            color: #cbd5e1;
+        }
+        .theory-focus-btn {
+            flex: 0 0 auto;
+            padding: 8px 14px;
+            font-size: 0.92rem;
+            background: #edf2f7;
+            color: #4a5568;
+            border: 1px solid transparent;
+            border-radius: 999px;
+            box-shadow: none;
+            transition: all 0.2s ease;
+        }
+        .theory-focus-btn:hover {
+            transform: translateY(-1px);
+            background: #e2e8f0;
+        }
+        .theory-focus-btn.active {
+            background: #3182ce;
+            color: #ffffff;
+            border-color: #2b6cb0;
+            box-shadow: 0 4px 10px rgba(49, 130, 206, 0.25);
+        }
+        .dark-mode .theory-focus-btn {
+            background: #0f172a;
+            color: #cbd5e1;
+            border-color: #334155;
+        }
+        .dark-mode .theory-focus-btn.active {
+            background: #4299e1;
+            color: #ffffff;
+            border-color: #3182ce;
+        }
+        .theory-focus-explain {
+            padding: 16px 18px;
+            border-radius: 14px;
+            background: linear-gradient(135deg, rgba(66, 153, 225, 0.08), rgba(56, 178, 172, 0.08));
+            border: 1px solid rgba(66, 153, 225, 0.18);
+            color: #2b6cb0;
+            font-weight: 600;
+            margin-bottom: 24px;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .dark-mode .theory-focus-explain {
+            background: linear-gradient(135deg, rgba(49, 130, 206, 0.14), rgba(56, 161, 105, 0.12));
+            border-color: rgba(144, 205, 244, 0.2);
+            color: #e2e8f0;
+        }
+        .theory-component-bar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: center;
+            margin: 0 0 12px;
+        }
+        .theory-component-btn {
+            flex: 0 0 auto;
+            padding: 8px 14px;
+            font-size: 0.92rem;
+            background: #f7fafc;
+            color: #4a5568;
+            border: 1px solid #e2e8f0;
+            border-radius: 999px;
+            box-shadow: none;
+            transition: all 0.2s ease;
+        }
+        .theory-component-btn:hover {
+            transform: translateY(-1px);
+            background: #edf2f7;
+        }
+        .theory-component-btn.active {
+            background: #2d3748;
+            color: #ffffff;
+            border-color: #1a202c;
+            box-shadow: 0 4px 12px rgba(45, 55, 72, 0.18);
+        }
+        .dark-mode .theory-component-btn {
+            background: #111827;
+            color: #cbd5e1;
+            border-color: #334155;
+        }
+        .dark-mode .theory-component-btn.active {
+            background: #e2e8f0;
+            color: #0f172a;
+            border-color: #cbd5e1;
+            box-shadow: 0 4px 12px rgba(15, 23, 42, 0.28);
+        }
+        .theory-component-explain {
+            padding: 14px 16px;
+            border-radius: 14px;
+            background: rgba(247, 250, 252, 0.95);
+            border: 1px solid #e2e8f0;
+            color: #2d3748;
+            margin-bottom: 24px;
+        }
+        .dark-mode .theory-component-explain {
+            background: rgba(15, 23, 42, 0.82);
+            border-color: #334155;
+            color: #e2e8f0;
+        }
+        .theory-scene-list {
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+        }
+        .theory-section-card {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 18px;
+            padding: 24px;
+            transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease, background 0.25s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        .theory-section-card::before {
+            content: '';
+            position: absolute;
+            inset: 0 auto 0 0;
+            width: 5px;
+            background: linear-gradient(180deg, #3182ce, #38a169);
+            opacity: 0.55;
+        }
+        .theory-section-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 24px rgba(15, 23, 42, 0.08);
+        }
+        .theory-section-card.active {
+            border-color: #3182ce;
+            background: linear-gradient(135deg, rgba(235, 248, 255, 0.92), rgba(240, 253, 250, 0.92));
+            box-shadow: 0 14px 28px rgba(49, 130, 206, 0.12);
+        }
+        .dark-mode .theory-section-card {
+            background: #0f172a;
+            border-color: #334155;
+        }
+        .dark-mode .theory-section-card:hover {
+            box-shadow: 0 12px 24px rgba(0,0,0,0.22);
+        }
+        .dark-mode .theory-section-card.active {
+            background: linear-gradient(135deg, rgba(30, 58, 138, 0.3), rgba(35, 78, 82, 0.35));
+            border-color: #4299e1;
+        }
+        .theory-scene-meta {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.82rem;
+            font-weight: 800;
+            color: #2b6cb0;
+            background: rgba(66, 153, 225, 0.12);
+            border-radius: 999px;
+            padding: 4px 10px;
+            margin-bottom: 12px;
+        }
+        .dark-mode .theory-scene-meta {
+            color: #90cdf4;
+            background: rgba(144, 205, 244, 0.12);
+        }
+        .theory-section-card h3 {
+            font-size: 1.38rem;
+            color: #1a202c;
+            margin-bottom: 10px;
+        }
+        .dark-mode .theory-section-card h3 {
+            color: #f8fafc;
+        }
+        .theory-observe {
+            color: #4a5568;
+            margin-bottom: 18px;
+        }
+        .dark-mode .theory-observe {
+            color: #cbd5e1;
+        }
+        .theory-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-bottom: 18px;
+        }
+        .theory-link-btn {
+            flex: 0 0 auto;
+            padding: 10px 16px;
+            border-radius: 10px;
+            border: 1px solid rgba(49, 130, 206, 0.25);
+            background: rgba(255,255,255,0.7);
+            color: #2b6cb0;
+            font-weight: 700;
+            box-shadow: none;
+            transition: all 0.2s ease;
+        }
+        .theory-link-btn:hover {
+            transform: translateY(-2px);
+            background: #ebf8ff;
+            border-color: rgba(49, 130, 206, 0.45);
+            box-shadow: 0 6px 14px rgba(49, 130, 206, 0.15);
+        }
+        .dark-mode .theory-link-btn {
+            background: rgba(15, 23, 42, 0.8);
+            border-color: #334155;
+            color: #90cdf4;
+        }
+        .dark-mode .theory-link-btn:hover {
+            background: rgba(30, 58, 138, 0.35);
+        }
+        .theory-explain-box {
+            background: rgba(255,255,255,0.7);
+            border-radius: 14px;
+            padding: 18px;
+            border: 1px solid rgba(226, 232, 240, 0.9);
+            margin-bottom: 16px;
+        }
+        .theory-explain-box p:last-child {
+            margin-bottom: 0;
+        }
+        .dark-mode .theory-explain-box {
+            background: rgba(15, 23, 42, 0.75);
+            border-color: rgba(51, 65, 85, 0.9);
+        }
+        .theory-formula-note {
+            border-top: 1px dashed rgba(160, 174, 192, 0.7);
+            padding-top: 16px;
+        }
+        .theory-formula-note p:last-child {
+            margin-bottom: 0;
+        }
+        .theory-formula-title {
+            font-size: 0.9rem;
+            font-weight: 800;
+            color: #2b6cb0;
+            margin-bottom: 8px;
+        }
+        .dark-mode .theory-formula-title {
+            color: #90cdf4;
+        }
+        .theory-side-note {
+            margin-top: 22px;
+            padding: 18px 20px;
+            border-radius: 14px;
+            background: rgba(237, 242, 247, 0.8);
+            color: #4a5568;
+            border: 1px solid #e2e8f0;
+        }
+        .dark-mode .theory-side-note {
+            background: rgba(15, 23, 42, 0.8);
+            color: #cbd5e1;
+            border-color: #334155;
+        }
         .interactive-calc {
             background: linear-gradient(135deg, #ebf8ff 0%, #e6fffa 100%);
             border: 1px solid #bee3f8;
             border-radius: 16px;
             padding: 30px;
-            margin-top: 50px;
+            margin-top: 30px;
             box-shadow: 0 4px 15px rgba(66, 153, 225, 0.1);
         }
         .dark-mode .interactive-calc {
@@ -1263,6 +1635,9 @@
         }
         .dark-mode .interactive-calc h3 {
             color: #90cdf4;
+        }
+        .theory-calc-card {
+            margin-top: 26px;
         }
         .calc-grid {
             display: grid;
@@ -1318,25 +1693,58 @@
             border-left-color: #319795;
             color: #e2e8f0;
         }
-        
         @media (max-width: 768px) {
             .theory-panel {
-                padding: 15px;
+                padding: 16px;
                 border-radius: 10px;
                 font-size: 0.95rem;
             }
             .theory-panel h2 {
-                font-size: 1.25rem;
-                margin: 25px 0 15px;
+                font-size: 1.28rem;
             }
             .math-block {
                 padding: 12px 10px;
                 font-size: 0.9rem;
-                margin: 15px 0;
+                margin: 14px 0;
+            }
+            .theory-canvas-label {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            .theory-region-grid {
+                grid-template-columns: 1fr;
+            }
+            .theory-section-card {
+                padding: 18px;
+            }
+            .theory-section-card h3 {
+                font-size: 1.12rem;
+            }
+            .theory-actions {
+                flex-direction: column;
+            }
+            .tutorial-action-btn,
+            .theory-link-btn {
+                width: 100%;
+                justify-content: center;
+                white-space: normal;
+                padding: 10px 12px;
+            }
+            .theory-focus-bar {
+                align-items: stretch;
+            }
+            .theory-component-bar {
+                align-items: stretch;
+            }
+            .theory-focus-btn {
+                width: 100%;
+            }
+            .theory-component-btn {
+                width: 100%;
             }
             .interactive-calc {
                 padding: 15px;
-                margin-top: 30px;
+                margin-top: 24px;
             }
             .interactive-calc h3 {
                 font-size: 1.15rem;
@@ -1347,24 +1755,6 @@
             .calc-grid {
                 grid-template-columns: 1fr;
                 gap: 15px;
-            }
-            .tutorial-card {
-                padding: 15px;
-                margin: 20px 0;
-            }
-            .tutorial-card h4 {
-                font-size: 1.05rem;
-            }
-            .tutorial-action-btn {
-                width: 100%;
-                justify-content: center;
-                white-space: normal;
-                padding: 10px;
-            }
-            .theory-canvas-label {
-                flex-direction: column;
-                gap: 5px;
-                align-items: flex-start;
             }
             #theoryCalcResult {
                 font-size: 1rem;
