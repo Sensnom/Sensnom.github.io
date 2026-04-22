@@ -41,17 +41,20 @@
                 </div>
                 
                 <div id="viewSim" class="view-container active">
-                    <div class="canvas-container">
-                        <div class="canvas-label">波函数 Ψ(x,t) - 实部(蓝) & 虚部(红)</div>
+                    <div class="canvas-container sim-resizable" data-resize-key="wave">
+                        <div class="canvas-label sim-chart-label"><span>波函数 Ψ(x,t) - 实部(蓝) & 虚部(红)</span><button type="button" class="chart-height-reset" data-reset-key="wave" aria-label="重置波函数图高度">重置高度</button></div>
                         <canvas id="waveCanvas" width="800" height="220"></canvas>
+                        <div class="chart-resize-handle" data-resize-key="wave" title="上下拖动调整高度"></div>
                     </div>
-                    <div class="canvas-container">
-                        <div class="canvas-label">概率密度 |Ψ(x,t)|²</div>
+                    <div class="canvas-container sim-resizable" data-resize-key="density">
+                        <div class="canvas-label sim-chart-label"><span>概率密度 |Ψ(x,t)|²</span><button type="button" class="chart-height-reset" data-reset-key="density" aria-label="重置概率密度图高度">重置高度</button></div>
                         <canvas id="densityCanvas" width="800" height="220"></canvas>
+                        <div class="chart-resize-handle" data-resize-key="density" title="上下拖动调整高度"></div>
                     </div>
-                    <div class="canvas-container">
-                        <div class="canvas-label">粒子模拟 (1000 粒子)</div>
+                    <div class="canvas-container sim-resizable" data-resize-key="ensemble">
+                        <div class="canvas-label sim-chart-label"><span>粒子模拟 (1000 粒子)</span><button type="button" class="chart-height-reset" data-reset-key="ensemble" aria-label="重置粒子模拟图高度">重置高度</button></div>
                         <canvas id="ensembleCanvas" width="800" height="120"></canvas>
+                        <div class="chart-resize-handle" data-resize-key="ensemble" title="上下拖动调整高度"></div>
                     </div>
                 </div>
 

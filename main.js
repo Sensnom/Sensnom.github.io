@@ -38,6 +38,29 @@
     
     // UI Helpers
     const isDark = () => document.body.classList.contains('dark-mode');
+    const simChartConfigs = {
+        wave: {
+            canvasId: 'waveCanvas',
+            defaultHeight: 220,
+            minHeight: 140,
+            maxHeight: 420,
+            height: null
+        },
+        density: {
+            canvasId: 'densityCanvas',
+            defaultHeight: 220,
+            minHeight: 140,
+            maxHeight: 420,
+            height: null
+        },
+        ensemble: {
+            canvasId: 'ensembleCanvas',
+            defaultHeight: 120,
+            minHeight: 90,
+            maxHeight: 260,
+            height: null
+        }
+    };
     
     // 仿真参数
     let V0 = 2.0;
@@ -144,6 +167,124 @@
         document.getElementById('dValue').textContent = d.toFixed(2);
         document.getElementById('eValue').textContent = E.toFixed(1);
         document.getElementById('sigmaValue').textContent = sigma.toFixed(1);
+    }
+
+    function clampSimChartHeight(key, height) {
+        const chartConfig = simChartConfigs[key];
+        if (!chartConfig) return Number(height);
+
+        const numericHeight = Number(height);
+        if (!Number.isFinite(numericHeight)) return chartConfig.defaultHeight;
+        return Math.min(chartConfig.maxHeight, Math.max(chartConfig.minHeight, Math.round(numericHeight)));
+    }
+
+    function applySimChartHeight(key) {
+        const chartConfig = simChartConfigs[key];
+        const canvas = chartConfig ? document.getElementById(chartConfig.canvasId) : null;
+        if (!canvas) return;
+
+        const height = clampSimChartHeight(key, chartConfig.height ?? canvas.height ?? chartConfig.defaultHeight);
+        chartConfig.height = height;
+        canvas.height = height;
+        canvas.style.height = `${height}px`;
+    }
+
+    function applyAllSimChartHeights() {
+        Object.keys(simChartConfigs).forEach(applySimChartHeight);
+    }
+
+    function renderSimCharts() {
+        const cWave = document.getElementById('waveCanvas');
+        const cDensity = document.getElementById('densityCanvas');
+        const cEnsemble = document.getElementById('ensembleCanvas');
+
+        renderWave(cWave.getContext('2d'), cWave.width, cWave.height);
+        renderDensity(cDensity.getContext('2d'), cDensity.width, cDensity.height);
+        renderEnsemble(cEnsemble.getContext('2d'), cEnsemble.width, cEnsemble.height);
+        updateActualTR();
+    }
+
+    function initSimChartResizeControls() {
+        let activeResizeDrag = null;
+
+        document.querySelectorAll('.chart-height-reset').forEach(button => {
+            button.addEventListener('click', () => {
+                const key = button.dataset.resetKey;
+                const chartConfig = simChartConfigs[key];
+                if (!chartConfig) return;
+
+                chartConfig.height = chartConfig.defaultHeight;
+                applySimChartHeight(key);
+                renderSimCharts();
+            });
+        });
+
+        document.querySelectorAll('.chart-resize-handle').forEach(handle => {
+            handle.addEventListener('pointerdown', event => {
+                if (activeResizeDrag) return;
+
+                const key = handle.dataset.resizeKey;
+                const chartConfig = simChartConfigs[key];
+                if (!chartConfig) return;
+
+                event.preventDefault();
+                if (handle.setPointerCapture) {
+                    handle.setPointerCapture(event.pointerId);
+                }
+                document.body.classList.add('chart-resize-dragging');
+
+                const canvas = document.getElementById(chartConfig.canvasId);
+                const startY = event.clientY;
+                const startHeight = chartConfig.height ?? canvas?.height ?? chartConfig.defaultHeight;
+                const dragState = {
+                    handle,
+                    pointerId: event.pointerId
+                };
+                activeResizeDrag = dragState;
+
+                const onMove = moveEvent => {
+                    if (activeResizeDrag !== dragState || moveEvent.pointerId !== dragState.pointerId) return;
+                    chartConfig.height = clampSimChartHeight(key, startHeight + (moveEvent.clientY - startY));
+                    applySimChartHeight(key);
+                    renderSimCharts();
+                };
+
+                const cleanupDrag = (shouldReleaseCapture) => {
+                    if (activeResizeDrag !== dragState) return;
+
+                    activeResizeDrag = null;
+                    document.body.classList.remove('chart-resize-dragging');
+                    handle.removeEventListener('pointermove', onMove);
+                    handle.removeEventListener('pointerup', stop);
+                    handle.removeEventListener('pointercancel', stop);
+                    handle.removeEventListener('lostpointercapture', onLostPointerCapture);
+
+                    if (!shouldReleaseCapture || !handle.releasePointerCapture) return;
+
+                    const canRelease = typeof handle.hasPointerCapture === 'function'
+                        ? handle.hasPointerCapture(dragState.pointerId)
+                        : true;
+                    if (canRelease) {
+                        handle.releasePointerCapture(dragState.pointerId);
+                    }
+                };
+
+                const stop = endEvent => {
+                    if (endEvent.pointerId !== dragState.pointerId) return;
+                    cleanupDrag(true);
+                };
+
+                const onLostPointerCapture = lostEvent => {
+                    if (lostEvent.pointerId !== dragState.pointerId) return;
+                    cleanupDrag(false);
+                };
+
+                handle.addEventListener('pointermove', onMove);
+                handle.addEventListener('pointerup', stop);
+                handle.addEventListener('pointercancel', stop);
+                handle.addEventListener('lostpointercapture', onLostPointerCapture);
+            });
+        });
     }
 
     function updateTheoryNarrative() {
@@ -1978,6 +2119,8 @@
 
     // 初始化
     window.addEventListener('load', () => {
+        applyAllSimChartHeights();
+        initSimChartResizeControls();
         initSimulation();
         updateTheoryNarrative();
         animationId = requestAnimationFrame(animationLoop);
