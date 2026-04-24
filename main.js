@@ -72,21 +72,21 @@
     const theoryFocusMeta = {
         left: {
             label: '左侧干涉',
-            explain: '区域 I 的解是 $Ae^{ikx} + Be^{-ikx}$。两个反向行波叠在一起，某些位置相长、某些位置相消，所以左边会出现干涉纹。'
+            explain: '区域 I：$Ae^{ikx}+Be^{-ikx}$。入射波和反射波相干叠加，产生干涉峰谷。'
         },
         barrier: {
             label: '势垒内部',
-            explain: '区域 II 的解是 $Ce^{-\\kappa x} + De^{\\kappa x}$。这里发生的是 $k \\to i\\kappa$，所以原来的 $e^{ikx}$ 振荡解会改写成指数解。严格说，墙内呈指数衰减的是包络 $|\\psi|$。'
+            explain: '区域 II 的解是 $Ce^{-\\kappa x} + De^{\\kappa x}$。$k \\to i\\kappa$ 后，$e^{ikx}$ 改写成指数项，包络 $|\\psi|$ 在掉。'
         },
         right: {
             label: '右侧透射',
-            explain: '区域 III 的解只剩 $Fe^{ikx}$。这里只有向右传播的透射波，没有从右侧返回的分量，所以右边是一段更小但还在继续起伏的波。'
+            explain: '区域 III：$Fe^{ikx}$。单向向右的透射波，振幅比左边小一个量级。'
         }
     };
 
     const theoryComponentMeta = {
         all: {
-            explain: '先一起看最合适。蓝线和红线是复波函数的两个分量，灰色虚线是包络 $|\\psi|$。如果你想确认“墙内指数衰减”到底落在什么量上，就切到只看包络。'
+            explain: '蓝线实部，红线虚部，灰色虚线包络。切到只看包络 $|\psi|$ 可以确认墙内指数衰减落在哪个量。'
         },
         real: {
             explain: '实部不是概率，也不是完整波函数。它只是 $\\psi$ 在实轴上的投影，所以会振荡、会过零，看起来不像一条单独的衰减线。'
@@ -95,34 +95,34 @@
             explain: '虚部和实部地位一样，只是相位错开。把它单独拎出来看，你会看到同样的波动结构，只不过峰谷位置和蓝线不重合。'
         },
         env: {
-            explain: '包络 $|\\psi| = \\sqrt{(\\Re\\psi)^2 + (\\Im\\psi)^2}$ 才是这里最该盯住的量。墙内说的“指数衰减”，严格讲就是它在往下掉。'
+            explain: '包络 $|\\psi| = \\sqrt{(\\Re\\psi)^2 + (\\Im\\psi)^2}$ 是这里该盯住的量。墙内说的“指数衰减”，就是它在往下掉。'
         }
     };
 
     const theoryScenes = {
         tunnel: {
-            title: '场景 1：为什么墙里还有波？',
-            subtitle: '蓝线是实部，红线是虚部，灰色虚线是包络 $|\\psi|$。墙内真正呈指数衰减的是包络。',
+            title: '场景 1：墙里为什么还有波？',
+            subtitle: '蓝线是实部，红线是虚部，灰色虚线是包络 $|\\psi|$。墙内包络掉。',
             focus: 'barrier',
-            calcLead: '先看墙内振幅怎么掉，再回头看这里的理论透射率。',
+            calcLead: '先看墙内振幅，再看理论透射率。',
             run() {
                 animateParamsTo(1.5, 3.0, 0.5);
             }
         },
         width: {
             title: '场景 2：为什么只加一点宽度，结果差很多？',
-            subtitle: '重点盯住灰色虚线包络和右侧透射波，看它们怎样一起掉下去。',
+            subtitle: '盯住灰色虚线包络和右侧透射波，看它们怎么一起掉下去。',
             focus: 'right',
-            calcLead: '这次最值得盯的是 T 的数量级，因为宽度 d 正在决定衰减累计了多久。',
+            calcLead: '这次看 T 的数量级，宽度 d 决定衰减累计了多久。',
             run() {
                 animateWidthSweep();
             }
         },
         overBarrier: {
-            title: '场景 3：为什么翻过去了，还会反弹？',
-            subtitle: '把目光移回左边，看看高能情况下反射纹为什么还在。',
+            title: '场景 3：翻过去了，为什么还会反弹？',
+            subtitle: '把能量拉过势垒高度，看左边干涉纹变密了还是变稀疏了。',
             focus: 'left',
-            calcLead: '现在透射会明显变大，但左边的反射纹不会立刻消失，因为边界匹配仍在起作用。',
+            calcLead: '透射会明显变大，但左边反射纹还在——因为边界匹配还在把一部分波折回来。',
             run() {
                 animateParamsTo(3.5, 3.0, 0.5);
             }
@@ -220,70 +220,77 @@
         });
 
         document.querySelectorAll('.chart-resize-handle').forEach(handle => {
-            handle.addEventListener('pointerdown', event => {
+            const key = handle.dataset.resizeKey;
+            if (!key) return;
+            const chartConfig = simChartConfigs[key];
+            if (!chartConfig) return;
+
+            const startDrag = event => {
                 if (activeResizeDrag) return;
-
-                const key = handle.dataset.resizeKey;
-                const chartConfig = simChartConfigs[key];
-                if (!chartConfig) return;
-
                 event.preventDefault();
-                if (handle.setPointerCapture) {
-                    handle.setPointerCapture(event.pointerId);
+
+                const touch = event.touches ? event.touches[0] : event;
+                const pointerId = event.pointerId ?? touch?.pointerId ?? Date.now();
+                if (handle.setPointerCapture && event.pointerId !== undefined) {
+                    handle.setPointerCapture(pointerId);
                 }
                 document.body.classList.add('chart-resize-dragging');
 
                 const canvas = document.getElementById(chartConfig.canvasId);
-                const startY = event.clientY;
+                const startY = touch.clientY;
                 const startHeight = chartConfig.height ?? canvas?.height ?? chartConfig.defaultHeight;
-                const dragState = {
-                    handle,
-                    pointerId: event.pointerId
-                };
+                const dragState = { handle, pointerId };
                 activeResizeDrag = dragState;
 
                 const onMove = moveEvent => {
-                    if (activeResizeDrag !== dragState || moveEvent.pointerId !== dragState.pointerId) return;
-                    chartConfig.height = clampSimChartHeight(key, startHeight + (moveEvent.clientY - startY));
+                    if (activeResizeDrag !== dragState) return;
+                    const moveTouch = moveEvent.touches ? moveEvent.touches[0] : moveEvent;
+                    const movePointerId = moveEvent.pointerId ?? moveTouch?.pointerId ?? dragState.pointerId;
+                    if (movePointerId !== dragState.pointerId) return;
+                    const clientY = moveTouch.clientY;
+                    chartConfig.height = clampSimChartHeight(key, startHeight + (clientY - startY));
                     applySimChartHeight(key);
                     renderSimCharts();
                 };
 
-                const cleanupDrag = (shouldReleaseCapture) => {
+                const cleanupDrag = shouldReleaseCapture => {
                     if (activeResizeDrag !== dragState) return;
-
                     activeResizeDrag = null;
                     document.body.classList.remove('chart-resize-dragging');
                     handle.removeEventListener('pointermove', onMove);
                     handle.removeEventListener('pointerup', stop);
                     handle.removeEventListener('pointercancel', stop);
                     handle.removeEventListener('lostpointercapture', onLostPointerCapture);
-
-                    if (!shouldReleaseCapture || !handle.releasePointerCapture) return;
-
-                    const canRelease = typeof handle.hasPointerCapture === 'function'
-                        ? handle.hasPointerCapture(dragState.pointerId)
-                        : true;
-                    if (canRelease) {
-                        handle.releasePointerCapture(dragState.pointerId);
+                    handle.removeEventListener('touchmove', onMove);
+                    handle.removeEventListener('touchend', stop);
+                    handle.removeEventListener('touchcancel', stop);
+                    if (shouldReleaseCapture && handle.releasePointerCapture && dragState.pointerId !== undefined) {
+                        const canRelease = typeof handle.hasPointerCapture === 'function' ? handle.hasPointerCapture(dragState.pointerId) : true;
+                        if (canRelease) handle.releasePointerCapture(dragState.pointerId);
                     }
                 };
 
                 const stop = endEvent => {
-                    if (endEvent.pointerId !== dragState.pointerId) return;
-                    cleanupDrag(true);
+                    const endTouch = endEvent.touches ? endEvent.touches[0] : endEvent;
+                    const endPointerId = endEvent.pointerId ?? endTouch?.pointerId ?? dragState.pointerId;
+                    if (endPointerId === dragState.pointerId) cleanupDrag(true);
                 };
-
                 const onLostPointerCapture = lostEvent => {
-                    if (lostEvent.pointerId !== dragState.pointerId) return;
-                    cleanupDrag(false);
+                    const lostPointerId = lostEvent.pointerId ?? dragState.pointerId;
+                    if (lostPointerId === dragState.pointerId) cleanupDrag(false);
                 };
 
                 handle.addEventListener('pointermove', onMove);
                 handle.addEventListener('pointerup', stop);
                 handle.addEventListener('pointercancel', stop);
                 handle.addEventListener('lostpointercapture', onLostPointerCapture);
-            });
+                handle.addEventListener('touchmove', onMove, { passive: false });
+                handle.addEventListener('touchend', stop);
+                handle.addEventListener('touchcancel', stop);
+            };
+
+            handle.addEventListener('pointerdown', startDrag);
+            handle.addEventListener('touchstart', startDrag, { passive: false });
         });
     }
 
@@ -997,7 +1004,7 @@
         }
 
         if (currentTheoryComponent === 'all' || currentTheoryComponent === 'env') {
-            // 严格来说，E < V0 时呈指数衰减的是包络 |psi|，不是单独某一条实部曲线。
+            // E < V0 时呈指数衰减的是包络 |psi|，不是单独某一条实部曲线。
             ctx.save();
             ctx.setLineDash([6, 4]);
             ctx.strokeStyle = isDarkMode ? 'rgba(226, 232, 240, 0.5)' : 'rgba(45, 55, 72, 0.35)';
@@ -1144,11 +1151,11 @@
         const mode = modeInput ? modeInput.value : 'total';
         const descEl = document.getElementById('staticModeDesc');
         if (mode === 'total') {
-            descEl.textContent = "👈 驻波干涉：导致实虚部振幅不同，包络呈波浪起伏";
+            descEl.textContent = "驻波干涉：导致实虚部振幅不同，包络呈波浪起伏";
         } else if (mode === 'incident') {
-            descEl.textContent = "👈 右行波：注意边界的波形断层！这说明“单个行波”无法满足薛定谔方程的连续性，必须产生反射波来填补断层。";
+            descEl.textContent = "右行波：注意边界的波形断层。这说明“单个行波”无法满足薛定谔方程的连续性，必须产生反射波来填补断层。";
         } else if (mode === 'reflected') {
-            descEl.textContent = "👈 左行波：它就像“粘合剂”，其在边界处的值精确等于右行波断层的落差，两者叠加才恢复平滑的总波！";
+            descEl.textContent = "左行波：它像“粘合剂”，其在边界处的值精确等于右行波断层的落差，两者叠加才恢复平滑的总波。";
         }
         
         const psiR = new Float64Array(N_stat);
@@ -1569,7 +1576,7 @@
         `;
         
         paramTip.innerHTML = `
-            <div class="param-tip-title">💡 仿真关联：${data.paramTitle}</div>
+            <div class="param-tip-title">仿真关联：${data.paramTitle}</div>
             <div class="param-tip-desc">${data.paramDesc}</div>
             <button class="param-btn" onclick='applyHistoryParams(this, ${JSON.stringify(data.action)})'>应用此参数配置到仿真</button>
         `;
@@ -1647,12 +1654,31 @@
         renderAll();
     }
 
+    function updateThemeToggleLabel() {
+        const button = document.getElementById('themeToggle');
+        if (!button) return;
+        const dark = document.body.classList.contains('dark-mode');
+        button.textContent = dark ? '浅色' : '深色';
+        button.setAttribute('aria-label', dark ? '切换到浅色主题' : '切换到深色主题');
+        button.setAttribute('title', dark ? '切换到浅色主题' : '切换到深色主题');
+    }
+
+    function syncTabAccessibility(activeId) {
+        document.querySelectorAll('.tab-btn').forEach(button => {
+            const isActive = button.id === activeId;
+            button.classList.toggle('active', isActive);
+            button.setAttribute('aria-selected', isActive ? 'true' : 'false');
+        });
+    }
+
     // 主题切换
     document.getElementById('themeToggle').addEventListener('click', function() {
         document.body.classList.toggle('dark-mode');
-        this.textContent = document.body.classList.contains('dark-mode') ? '☀️' : '🌙';
-        this.title = document.body.classList.contains('dark-mode') ? '切换白天模式' : '切换黑夜模式';
+        updateThemeToggleLabel();
         if (!isPlaying) renderAll(); // 暂停状态下强制重绘以更新颜色
+        if (currentTab === 'data') renderChart();
+        if (currentTab === 'data') renderStaticWave();
+        if (currentTab === 'theory') renderTheoryNumerov();
     });
 
     document.getElementById('playPauseBtn').addEventListener('click', function() {
@@ -1717,6 +1743,8 @@
 
     let currentTab = 'sim';
     let pipInitialized = false;
+    let theoryPiPWrapper = null;
+    let theoryPiPCanvas = null;
 
     const tabConfig = {
         sim: { buttonId: 'tabSim', viewId: 'viewSim' },
@@ -1725,43 +1753,118 @@
         theory: { buttonId: 'tabTheory', viewId: 'viewTheory' }
     };
 
+    function updateTheoryPiPState() {
+        if (!theoryPiPWrapper || !theoryPiPCanvas) return;
+
+        const isPiPActive = theoryPiPCanvas.classList.contains('pip-mode');
+        const liveRect = theoryPiPCanvas.getBoundingClientRect();
+        const wrapperRect = theoryPiPWrapper.getBoundingClientRect();
+        const stickyTop = 20;
+
+        if (isPiPActive) {
+            if (wrapperRect.bottom > 25) {
+                theoryPiPCanvas.classList.remove('pip-mode');
+                theoryPiPWrapper.style.height = 'auto';
+            }
+        } else {
+            if (wrapperRect.top >= stickyTop || wrapperRect.bottom <= stickyTop + liveRect.height + 30) {
+                theoryPiPWrapper.style.height = `${theoryPiPCanvas.offsetHeight}px`;
+                theoryPiPCanvas.classList.add('pip-mode');
+            }
+        }
+    }
+
+    let pipScrollTimeout = null;
+    let theoryNumerovPiPCanvas = null;
+    let theoryPiPWindow = null;
+    let theoryPiPInterval = null;
+    let lastPiPRenderedModule = null;
+    let lastPiPRenderedFocus = null;
+    let lastPiPRenderedComponent = null;
+
+    function schedulePiPUpdate() {
+        if (pipScrollTimeout) return;
+        pipScrollTimeout = setTimeout(() => {
+            pipScrollTimeout = null;
+            updateTheoryPiPState();
+        }, 30);
+    }
+
+    function createTheoryPiPWindow() {
+        const pipWindow = document.createElement('div');
+        pipWindow.className = 'theory-pip-window';
+        pipWindow.innerHTML = '<canvas id="theoryNumerovPiPCanvas" width="800" height="220"></canvas>';
+        document.body.appendChild(pipWindow);
+        theoryPiPWindow = pipWindow;
+        theoryNumerovPiPCanvas = pipWindow.querySelector('#theoryNumerovPiPCanvas');
+    }
+
+    function syncPiPCanvas() {
+        if (!theoryNumerovPiPCanvas) return;
+        const srcCanvas = document.getElementById('theoryNumerovCanvas');
+        if (!srcCanvas) return;
+        const srcCtx = srcCanvas.getContext('2d');
+        const dstCtx = theoryNumerovPiPCanvas.getContext('2d');
+        theoryNumerovPiPCanvas.width = srcCanvas.width;
+        theoryNumerovPiPCanvas.height = srcCanvas.height;
+        dstCtx.drawImage(srcCanvas, 0, 0);
+    }
+
     function ensureTheoryPiP() {
-        if (pipInitialized) return;
+        if (pipInitialized) {
+            updateTheoryPiPState();
+            return;
+        }
         pipInitialized = true;
 
         const theoryCanvasContainer = document.querySelector('.theory-canvas-container');
         if (!theoryCanvasContainer) return;
 
-        const wrapper = document.createElement('div');
-        wrapper.className = 'theory-canvas-wrapper';
-        wrapper.style.position = 'relative';
+        createTheoryPiPWindow();
 
-        theoryCanvasContainer.parentNode.insertBefore(wrapper, theoryCanvasContainer);
-        wrapper.appendChild(theoryCanvasContainer);
+        theoryPiPWrapper = theoryCanvasContainer;
+        theoryPiPCanvas = theoryCanvasContainer;
 
-        const checkPiP = () => {
-            const rect = wrapper.getBoundingClientRect();
-            if (rect.bottom < 0) {
-                if (!theoryCanvasContainer.classList.contains('pip-mode')) {
-                    wrapper.style.height = theoryCanvasContainer.offsetHeight + 'px';
-                    theoryCanvasContainer.classList.add('pip-mode');
-                }
-            } else if (theoryCanvasContainer.classList.contains('pip-mode')) {
-                theoryCanvasContainer.classList.remove('pip-mode');
-                wrapper.style.height = 'auto';
+        window.addEventListener('scroll', schedulePiPUpdate, { passive: true });
+        window.addEventListener('resize', schedulePiPUpdate, { passive: true });
+        updateTheoryPiPState();
+    }
+
+    function updateTheoryPiPState() {
+        if (!theoryPiPWrapper || !theoryPiPCanvas || !theoryPiPWindow) return;
+
+        const wrapperRect = theoryPiPCanvas.getBoundingClientRect();
+        const shouldShowPiP = wrapperRect.top < 0;
+
+        const isPiPActive = theoryPiPWindow.classList.contains('active');
+
+        if (shouldShowPiP && !isPiPActive) {
+            theoryPiPWindow.classList.add('active');
+            syncPiPCanvas();
+            lastPiPRenderedModule = currentTheoryModule;
+            lastPiPRenderedFocus = currentTheoryFocus;
+            lastPiPRenderedComponent = currentTheoryComponent;
+        } else if (!shouldShowPiP && isPiPActive) {
+            theoryPiPWindow.classList.remove('active');
+        } else if (isPiPActive) {
+            if (currentTheoryModule !== lastPiPRenderedModule ||
+                currentTheoryFocus !== lastPiPRenderedFocus ||
+                currentTheoryComponent !== lastPiPRenderedComponent) {
+                syncPiPCanvas();
+                lastPiPRenderedModule = currentTheoryModule;
+                lastPiPRenderedFocus = currentTheoryFocus;
+                lastPiPRenderedComponent = currentTheoryComponent;
             }
-        };
-
-        window.addEventListener('scroll', checkPiP, { passive: true });
-        window.addEventListener('resize', checkPiP, { passive: true });
-        checkPiP();
+        }
     }
 
     function activateTab(tabName) {
         currentTab = tabName;
+        const activeButtonId = tabConfig[tabName].buttonId;
+
+        syncTabAccessibility(activeButtonId);
 
         Object.entries(tabConfig).forEach(([key, config]) => {
-            document.getElementById(config.buttonId).classList.toggle('active', key === tabName);
             document.getElementById(config.viewId).classList.toggle('active', key === tabName);
         });
 
@@ -2123,6 +2226,8 @@
         initSimChartResizeControls();
         initSimulation();
         updateTheoryNarrative();
+        updateThemeToggleLabel();
+        syncTabAccessibility(tabConfig[currentTab].buttonId);
         animationId = requestAnimationFrame(animationLoop);
 
         
@@ -2135,14 +2240,6 @@
             });
         }
 
-        
-        // 绑定主题切换时重绘图表
-        document.getElementById('themeToggle').addEventListener('click', () => {
-            if (currentTab === 'data') renderChart();
-            if (currentTab === 'data') renderStaticWave();
-            if (currentTab === 'theory') renderTheoryNumerov();
-            });
-        
         // 绑定静态图互动选项事件
         const staticModeInputs = document.querySelectorAll('input[name="staticMode"]');
         staticModeInputs.forEach(input => {

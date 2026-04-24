@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
     <meta name="format-detection" content="telephone=no">
@@ -12,26 +12,33 @@
     <meta name="screen-orientation" content="portrait">
     <meta name="full-screen" content="yes">
     <title>量子隧穿仿真</title>
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="styles.css?v=20260423-pip-fix">
 
-    <!-- KaTeX for math rendering -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
     <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
 </head>
 
 <body>
-    <div class="container">
-        <button id="themeToggle" title="切换黑夜模式">🌙</button>
-        <h1>量子隧穿仿真</h1>
-        
-        <div class="main-layout">
-            <div class="tabs">
-                    <button class="tab-btn active" id="tabSim">实时演化</button>
-                    <button class="tab-btn" id="tabData">参数关系</button>
-                    <button class="tab-btn" id="tabHistory">发展历史</button>
-                    <button class="tab-btn" id="tabTheory">原理解析</button>
+    <div class="page-shell">
+        <div class="container">
+            <header class="page-header">
+                <div class="page-header-copy">
+                    <p class="page-eyebrow">Quantum Tunneling Lab</p>
+                    <h1>量子隧穿仿真</h1>
+                    <p class="page-subtitle">实时观察波函数演化、参数关系与原理解释，用更清晰的实验台界面浏览整套演示内容。</p>
                 </div>
+                <button id="themeToggle" type="button" title="切换主题" aria-label="切换明暗主题"></button>
+            </header>
+
+            <div class="tabs" role="tablist" aria-label="页面主导航">
+                <button class="tab-btn active" id="tabSim" role="tab" aria-selected="true">实时演化</button>
+                <button class="tab-btn" id="tabData" role="tab" aria-selected="false">参数关系</button>
+                <button class="tab-btn" id="tabHistory" role="tab" aria-selected="false">发展历史</button>
+                <button class="tab-btn" id="tabTheory" role="tab" aria-selected="false">原理解析</button>
+            </div>
+
+            <div class="main-layout">
                 <div class="left-panel">
                 
                 <!-- 这些视图在两个Tab下都保持可见，方便观察实时演化 -->
@@ -60,15 +67,15 @@
 
                 <div id="viewData" class="view-container">
                     <div class="static-controls">
-                        <div class="static-controls-title">💡 为什么实部(蓝)/虚部(红)振幅不一样？</div>
+                        <div class="static-controls-title">为什么实部(蓝)/虚部(红)振幅不一样？</div>
                         <div class="static-controls-options">
                             <label><input type="radio" name="staticMode" value="total" checked> 1. 默认：总波 (驻波干涉)</label>
                             <label><input type="radio" name="staticMode" value="incident"> 2. 剥离：右行波 (入射波+透射波)</label>
                             <label><input type="radio" name="staticMode" value="reflected"> 3. 剥离：左行波 (反射波)</label>
-                            <span id="staticModeDesc" class="mode-desc">👈 驻波干涉：导致实虚部振幅不同，包络呈波浪起伏</span>
+                            <span id="staticModeDesc" class="mode-desc">驻波干涉：导致实虚部振幅不同，包络呈波浪起伏</span>
                         </div>
-                        <div class="static-controls-options" style="margin-top: 12px; font-size: 13px; color: #4a5568; background: rgba(0,0,0,0.03); padding: 6px 12px; border-radius: 6px;">
-                            <span style="font-weight: bold; margin-right: 10px;">视图控制:</span>
+                        <div class="static-controls-options static-controls-note">
+                            <span class="static-controls-note-label">视图控制:</span>
                             <label><input type="checkbox" id="showStaticReal" checked> 显示实部 (蓝线)</label>
                             <label><input type="checkbox" id="showStaticImag" checked> 显示虚部 (红线)</label>
                             <label><input type="checkbox" id="showStaticEnv" checked> 显示包络幅度 (虚线)</label>
@@ -77,7 +84,7 @@
                     
                     <div class="canvas-container">
                         <div class="canvas-label">定态散射波函数 - 实部(蓝) & 虚部(红)</div>
-                        <canvas id="staticWaveCanvas" width="800" height="220" style="display: block; width: 100%; height: auto;"></canvas>
+                        <canvas id="staticWaveCanvas" class="responsive-canvas" width="800" height="220"></canvas>
                     </div>
 
                     <div class="chart-controls">
@@ -87,7 +94,7 @@
                             <option value="E">粒子能量 E</option>
                             <option value="V0">势垒高度 V₀</option>
                         </select>
-                        <label style="margin-left: 15px;">Y轴缩放:</label>
+                        <label class="chart-controls-secondary-label">Y轴缩放:</label>
                         <select id="chartScaleSelect">
                             <option value="log">对数 (Log) - 适合看指数衰减</option>
                             <option value="linear">线性 (Linear)</option>
@@ -120,18 +127,18 @@
                         <div class="theory-header">
                             <div class="theory-eyebrow">原理解析 / 看图说理</div>
                             <h2>图像为什么会长成这样?</h2>
-                            <p class="theory-lead">这张定态图会一直跟着你。每点一个场景，参数都会缓慢变化，你只需要盯住左侧干涉、墙内衰减和右侧透射是怎么一起变的。</p>
+                            <p class="theory-lead">这张定态图会一直跟着你。每点一个场景，参数会缓慢变化，左侧干涉、墙内衰减和右侧透射会同步改变。</p>
                         </div>
 
                         <div class="canvas-container theory-canvas-container sticky-theory-canvas">
                             <div class="canvas-label theory-canvas-label">
                                 <div class="theory-canvas-heading">
                                     <span id="theoryCanvasTitle">场景 1：为什么墙里还有波？</span>
-                                    <span id="theoryCanvasSubtitle">蓝线是实部，红线是虚部，灰色虚线是包络 $|\psi|$。墙内真正呈指数衰减的是包络。</span>
+                                    <span id="theoryCanvasSubtitle">蓝线是实部，红线是虚部，灰色虚线是包络 $|\psi|$。墙内包络在往下掉。</span>
                                 </div>
                                 <span class="theory-canvas-focus-pill" id="theoryCanvasFocusTag">当前焦点：势垒内部</span>
                             </div>
-                            <canvas id="theoryNumerovCanvas" width="800" height="220" style="display: block; width: 100%; height: auto;"></canvas>
+                            <canvas id="theoryNumerovCanvas" class="responsive-canvas" width="800" height="220"></canvas>
                         </div>
 
                         <div class="theory-focus-bar" id="theoryFocusBar">
@@ -140,7 +147,7 @@
                             <button class="theory-focus-btn" data-focus="left">左侧干涉</button>
                             <button class="theory-focus-btn" data-focus="right">右侧透射</button>
                         </div>
-                        <div class="theory-focus-explain" id="theoryFocusExplain">区域 II 的解是 $Ce^{-\kappa x} + De^{\kappa x}$。这里发生的是 $k \to i\kappa$，所以原来的 $e^{ikx}$ 振荡解会改写成指数解。严格说，墙内呈指数衰减的是包络 $|\psi|$。</div>
+                        <div class="theory-focus-explain" id="theoryFocusExplain">区域 II 的解是 $Ce^{-\kappa x} + De^{\kappa x}$。$k \to i\kappa$ 后，$e^{ikx}$ 变成了指数项。包络 $|\psi|$ 在往下掉。</div>
 
                         <div class="theory-component-bar" id="theoryComponentBar">
                             <span class="theory-focus-label">看哪条线</span>
@@ -149,32 +156,32 @@
                             <button class="theory-component-btn" data-component="imag">只看虚部</button>
                             <button class="theory-component-btn" data-component="env">只看包络</button>
                         </div>
-                        <div class="theory-component-explain" id="theoryComponentExplain">先一起看最合适。蓝线和红线是复波函数在两个方向上的投影，灰色虚线是包络 $|\psi|$。如果你想确认“墙内指数衰减”到底落在什么量上，就切到只看包络。</div>
+                        <div class="theory-component-explain" id="theoryComponentExplain">先一起看。蓝线和红线是复波函数在两个方向上的投影，灰色虚线是包络 $|\psi|$。如果你想确认“墙内指数衰减”到底落在什么量上，就切到只看包络。</div>
 
                         <div class="theory-region-grid">
                             <div class="theory-region-card region-left">
                                 <div class="theory-region-title">区域 I：入射 + 反射</div>
                                 <div class="math-block">$$ \psi_I(x)=Ae^{ikx}+Be^{-ikx} $$</div>
-                                <p>这里有两股方向相反的行波。它们叠在一起，某些位置相长、某些位置相消，所以左边看起来不是单一正弦，而是一串干涉纹。</p>
+                                <p>入射波和反射波同时存在，相干叠加形成驻波，干涉纹就是这么来的。</p>
                             </div>
                             <div class="theory-region-card region-barrier">
                                 <div class="theory-region-title">区域 II：势垒内部</div>
                                 <div class="math-block">$$ \psi_{II}(x)=Ce^{-\kappa x}+De^{\kappa x} $$</div>
-                                <p>一旦 $E &lt; V_0$，原来区域里的波数 $k=\sqrt{2m(E-V)}/\hbar$ 会变成纯虚数 $i\kappa$。于是 $e^{ikx}$ 不再表示振荡，而会改写成指数项。严格说，明显单调掉下去的是包络 $|\psi|$。</p>
+                                <p>$k\to i\kappa$ 后，原来的振荡解 $e^{ikx}$ 改写成 $e^{-\kappa x}$，波函数不再震荡，而是指数衰减。</p>
                             </div>
                             <div class="theory-region-card region-right">
                                 <div class="theory-region-title">区域 III：透射出去</div>
                                 <div class="math-block">$$ \psi_{III}(x)=Fe^{ikx} $$</div>
-                                <p>右侧只保留向右传播的透射波，没有从右边打回来的分量，所以它还是会振荡，只是振幅明显更小。</p>
+                                <p>过了势垒，只剩单向波 $Fe^{ikx}$，没有反射回来那部分了。振幅比左边小很多。</p>
                             </div>
                         </div>
-                        <div class="theory-boundary-note">这三段不是硬拼出来的。真正决定曲线怎么接上的，是两条边界条件：<strong>波函数本身要连续</strong>，而且<strong>一阶导数也要连续</strong>。所以图上不会在边界处突然断掉，而会平滑地从“干涉纹”过渡到“包络衰减”，再接到右侧透射波。</div>
+                        <div class="theory-boundary-note"><strong>边界条件</strong>：波函数连续，一阶导数连续。这两条把三个区域的解"缝"在一起，保证曲线在边界处不断裂、不突变。</div>
 
                         <div class="theory-scene-list">
                             <section class="theory-section-card active" id="theorySceneTunnel" data-scene="tunnel">
                                 <div class="theory-scene-meta">场景 1</div>
                                 <h3>为什么墙里还有波？</h3>
-                                <p class="theory-observe">先把粒子能量压到墙高以下。看三件事：左边为什么出现更大的起伏，墙里为什么没直接归零，右边为什么还能接出一小段透射波。</p>
+                                <p class="theory-observe">把能量压到墙高以下。左边干涉纹变密了，墙内包络在往下掉，右侧透射波比左边小很多。</p>
                                 <div class="theory-actions">
                                     <button class="tutorial-action-btn" onclick="runTheoryScene('tunnel')">
                                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
@@ -183,60 +190,60 @@
                                     <button class="theory-link-btn" onclick="jumpToTab('sim')">去实时演化看波包分裂</button>
                                 </div>
                                 <div class="theory-explain-box">
-                                    <p><strong>区域 I 对应 $Ae^{ikx}+Be^{-ikx}$</strong>。两个反向行波同时存在，所以左边天然会出现一串干涉峰谷。</p>
-                                    <p><strong>区域 II 对应 $Ce^{-\kappa x}+De^{\kappa x}$</strong>。这里真正发生的事是 $k \to i\kappa$，所以原来的 $e^{ikx}$ 型振荡解被改写成指数解。严格说，明显单调掉下去的是包络 $|\psi|$，不是单独某一条实部曲线。</p>
-                                    <p><strong>区域 III 对应 $Fe^{ikx}$</strong>。右边只剩向右传播的透射波，因此还会继续起伏，但振幅已经被前面的衰减压得很小。</p>
+                                    <p><strong>区域 I：$Ae^{ikx}+Be^{-ikx}$</strong>。左边同时存在向右和向左的行波，两列波叠加产生干涉峰谷。</p>
+                                    <p><strong>区域 II：$Ce^{-\kappa x}+De^{\kappa x}$</strong>。能量低于势垒时波数变纯虚，$e^{ikx}$ 变成指数衰减。包络 $|\psi|$ 稳步下降。</p>
+                                    <p><strong>区域 III：$Fe^{ikx}$</strong>。只有向右的单向波，透过势垒后继续振荡，振幅明显比左边小。</p>
                                 </div>
                                 <div class="theory-formula-note">
-                                    <div class="theory-formula-title">公式只负责确认</div>
+                                    <div class="theory-formula-title">公式</div>
                                     <div class="math-block">$$ -\frac{\hbar^2}{2m} \frac{d^2\psi(x)}{dx^2} + V(x)\psi(x) = E\psi(x) $$</div>
-                                    <p>当 $E &lt; V_0$ 时，势垒内部的解会变成指数型，所以你应该看灰色虚线包络怎样平滑掉下去，而不是要求某一条实部或虚部单独变成一条纯指数线。</p>
+                                    <p>$E&lt;V_0$ 时解是指数型。包络 $|\psi|$ 不是震荡下降，而是单调往下掉。</p>
                                 </div>
                             </section>
 
                             <section class="theory-section-card" id="theorySceneWidth" data-scene="width">
                                 <div class="theory-scene-meta">场景 2</div>
                                 <h3>为什么只加一点宽度，结果差很多？</h3>
-                                <p class="theory-observe">这次别先看左边，直接盯住墙内和右侧。只把势垒宽度从 0.3nm 慢慢拉到 0.8nm，观察透射波幅度和理论透射率怎么一起掉下去。</p>
+                                <p class="theory-observe">把宽度慢慢拉大。透射率不是线性下降，而是越往后掉得越快。</p>
                                 <div class="theory-actions">
-                                    <button class="tutorial-action-btn" style="background:#38a169;" onclick="runTheoryScene('width')">
+                                    <button class="tutorial-action-btn tutorial-action-success" onclick="runTheoryScene('width')">
                                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
                                         动态拉长势垒，看透射暴跌
                                     </button>
                                     <button class="theory-link-btn" onclick="jumpToTab('data', 'd')">去参数关系看 T-d 曲线</button>
                                 </div>
                                 <div class="theory-explain-box">
-                                    <p>既然墙里走的是 $e^{-\kappa x}$ 这一类指数衰减解，那么粒子在势垒里每多走一点，包络 $|\psi|$ 都会再乘上一段衰减因子。</p>
-                                    <p>所以<strong>宽度不是多一点点距离</strong>，而是让衰减持续得更久。墙越宽，能穿到右边的那一小段波就越弱。</p>
-                                    <p>这也是 STM、Flash 这类器件为什么会对纳米级距离变化极端敏感。</p>
+                                    <p>包络每往前穿进势垒一点，振幅就要再乘一个 $e^{-\kappa x}$。</p>
+                                    <p>宽度增加意味着包络要在势垒里走更远，每一步都在乘衰减因子。</p>
+                                    <p>这就是 STM 探针要控制在亚纳米精度、Flash 擦写有极限的原因。</p>
                                 </div>
                                 <div class="theory-formula-note">
-                                    <div class="theory-formula-title">公式只负责确认</div>
+                                    <div class="theory-formula-title">公式</div>
                                     <div class="math-block">$$ T \approx 16 \frac{E}{V_0}\left(1 - \frac{E}{V_0}\right)e^{-2\kappa d} $$</div>
-                                    <p>真正让人“肉眼感觉离谱”的是这个指数项 $e^{-2\kappa d}$。宽度 $d$ 不是线性惩罚，而是在指数里不断累计衰减。</p>
+                                    <p>$e^{-2\kappa d}$ 是主角。宽度 $d$ 翻一倍，指数里的幂翻两倍，透射率跌几十倍。</p>
                                 </div>
                             </section>
 
                             <section class="theory-section-card" id="theorySceneOverBarrier" data-scene="overBarrier">
                                 <div class="theory-scene-meta">场景 3</div>
                                 <h3>为什么翻过去了，还会反弹？</h3>
-                                <p class="theory-observe">把能量拉到高于墙高，再回头看左边。你会发现右边透射明显增强了，但左边的干涉纹并没有完全消失。</p>
+                                <p class="theory-observe">把能量拉过势垒高度。看右边透射明显变强，但左边干涉纹还在。</p>
                                 <div class="theory-actions">
-                                    <button class="tutorial-action-btn" style="background:#d69e2e;" onclick="runTheoryScene('overBarrier')">
+                                    <button class="tutorial-action-btn tutorial-action-warn" onclick="runTheoryScene('overBarrier')">
                                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
                                         切到 E &gt; V₀，看左侧反射
                                     </button>
                                     <button class="theory-link-btn" onclick="jumpToTab('sim')">去实时演化看高能碰墙</button>
                                 </div>
                                 <div class="theory-explain-box">
-                                    <p>能量高于势垒后，墙内和右侧都会重新回到振荡解；但只要边界还在，波函数和导数就仍然要做连续匹配。</p>
-                                    <p>这个匹配通常会把左侧解拆成 $Ae^{ikx}+Be^{-ikx}$ 两部分：前者继续向右冲，后者被折回左边，所以左边仍会保留反射纹。</p>
-                                    <p>这也是为什么你在实时演化图里会看到“多数过去了，但仍有一部分被打回来”。</p>
+                                    <p>能量超过势垒后，墙内变成普通振荡解。但边界处的匹配条件还在，入射波会被反射一部分回来。</p>
+                                    <p>解里的 $Be^{-ikx}$ 项就是反射项，向左跑。</p>
+                                    <p>实时演化里"多数过去了，部分反射回来"。</p>
                                 </div>
                                 <div class="theory-formula-note">
-                                    <div class="theory-formula-title">公式只负责确认</div>
+                                    <div class="theory-formula-title">公式</div>
                                     <div class="math-block">$$ T = \frac{1}{1 + \frac{V_0^2}{4E(E - V_0)} \sin^2(k_2 d)} $$</div>
-                                    <p>只要边界匹配还在起作用，透射系数就不一定是 1。也就是说，<strong>E &gt; V₀ 仍然允许反射</strong>，只是图像形状从“墙内衰减”为主，变成“界面反射”为主。</p>
+                                    <p><strong>E > V₀ 仍会有反射</strong>。透射系数小于 1，是因为界面处的反射还没消失。</p>
                                 </div>
                             </section>
                         </div>
@@ -246,8 +253,8 @@
                         </div>
 
                         <div class="interactive-calc theory-calc-card">
-                            <h3>🧮 数值确认：你刚刚看到的图，对应的量是多少？</h3>
-                            <p class="calc-desc" id="theoryCalcLead">先看墙内振幅怎么掉，再回头看这里的理论透射率。</p>
+                            <h3>数值确认：你刚刚看到的图，对应的量是多少？</h3>
+                            <p class="calc-desc" id="theoryCalcLead">先看墙内振幅，再看理论透射率。</p>
                             <p class="calc-desc">结合当前仿真器正在运行的物理参数（仿真内部的相对单位制，$\hbar \approx 0.658$, $m \approx 5.686$）：</p>
                             <div class="calc-grid">
                                 <div class="calc-item">
@@ -300,11 +307,20 @@
                 </div>
 
                 <div class="results">
-                    <div style="color: #4a5568; font-size: 14px;">理论透射系数 T <br><span id="tValue" style="color: #718096; font-size: 18px;">0.0000</span></div>
-                    <hr style="border: 0; border-top: 1px dashed #cbd5e0; margin: 8px 0;">
-                    <div style="color: #4a5568; font-size: 14px;">理论反射系数 R <br><span id="rValue" style="color: #718096; font-size: 18px;">0.0000</span></div>
-                    <hr style="border: 0; border-top: 1px dashed #cbd5e0; margin: 8px 0;">
-                    <div style="color: #2b6cb0; font-size: 14px;">波包实际透射 (Wave Packet) <br><span id="actualTValue" style="font-size: 22px;">0.00%</span></div>
+                    <div class="result-item">
+                        <div class="result-label">理论透射系数 T</div>
+                        <span id="tValue" class="result-value result-value-secondary">0.0000</span>
+                    </div>
+                    <hr class="metric-divider">
+                    <div class="result-item">
+                        <div class="result-label">理论反射系数 R</div>
+                        <span id="rValue" class="result-value result-value-secondary">0.0000</span>
+                    </div>
+                    <hr class="metric-divider">
+                    <div class="result-item result-item-accent">
+                        <div class="result-label">波包实际透射 (Wave Packet)</div>
+                        <span id="actualTValue" class="result-value">0.00%</span>
+                    </div>
                 </div>
             </div>
         </div>
