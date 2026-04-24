@@ -31,6 +31,8 @@
     let stateHistory = [];
     let currentFrame = 0;
     let currentTime = 0.0;
+    let playbackSpeed = 1.0;
+    let playbackFrameAccumulator = 0;
     
     // 状态
     let isPlaying = true;
@@ -59,6 +61,13 @@
             minHeight: 90,
             maxHeight: 260,
             height: null
+        },
+        dataRelation: {
+            canvasId: 'densityParticleRelationCanvas',
+            defaultHeight: 220,
+            minHeight: 140,
+            maxHeight: 420,
+            height: null
         }
     };
     
@@ -67,7 +76,16 @@
     let d = 0.5;
     let E = 1.5;
     let sigma = 0.5;
+    let relationSigma = 0.6;
+    let isRelationPlaying = false;
+    let relationPlaybackSpeed = 1.0;
+    let relationPlaybackPhase = -Math.PI / 2;
+    let relationPlaybackLastTime = null;
     const barrierCenter = 0.0;
+    const relationSigmaMin = 0.6;
+    const relationSigmaMax = 5.0;
+    const relationPlaybackBasePeriod = 6.0;
+    const relationParticleCount = 1600;
 
     const theoryFocusMeta = {
         left: {
@@ -149,6 +167,14 @@
     let dRe = new Float64Array(N);
     let dIm = new Float64Array(N);
 
+    function getInitialPacketCenter() {
+        return -6.0;
+    }
+
+    function getInitialPacketWaveNumber() {
+        return Math.sqrt(2 * mass * E) / hbar;
+    }
+
     // 复数运算辅助函数
     function c_div(aRe, aIm, bRe, bIm) {
         const denom = bRe * bRe + bIm * bIm;
@@ -167,6 +193,76 @@
         document.getElementById('dValue').textContent = d.toFixed(2);
         document.getElementById('eValue').textContent = E.toFixed(1);
         document.getElementById('sigmaValue').textContent = sigma.toFixed(1);
+    }
+
+    function syncPlaybackSpeedControls() {
+        const slider = document.getElementById('playbackSpeedSlider');
+        const value = document.getElementById('playbackSpeedValue');
+        if (slider) slider.value = playbackSpeed.toFixed(2);
+        if (value) value.textContent = `${playbackSpeed.toFixed(2)}x`;
+    }
+
+    function syncRelationSigmaControls() {
+        const slider = document.getElementById('relationSigmaSlider');
+        const value = document.getElementById('relationSigmaValue');
+        if (slider) slider.value = relationSigma.toFixed(2);
+        if (value) value.textContent = relationSigma.toFixed(2);
+    }
+
+    function syncRelationSpeedControls() {
+        const slider = document.getElementById('relationSpeedSlider');
+        const value = document.getElementById('relationSpeedValue');
+        if (slider) slider.value = relationPlaybackSpeed.toFixed(2);
+        if (value) value.textContent = `${relationPlaybackSpeed.toFixed(2)}x`;
+    }
+
+    function updateRelationPlayPauseUI() {
+        const button = document.getElementById('relationPlayPauseBtn');
+        if (!button) return;
+        button.textContent = isRelationPlaying ? '暂停' : '播放';
+        button.setAttribute('aria-label', isRelationPlaying ? '暂停 sigma 自动扫描' : '播放 sigma 自动扫描');
+    }
+
+    function renderRelationChart() {
+        const relationCanvas = document.getElementById('densityParticleRelationCanvas');
+        if (!relationCanvas) return;
+        renderDensityParticleRelation(relationCanvas.getContext('2d'), relationCanvas.width, relationCanvas.height);
+    }
+
+    function syncRelationPlaybackPhaseFromSigma() {
+        const normalized = ((relationSigma - relationSigmaMin) / (relationSigmaMax - relationSigmaMin)) * 2 - 1;
+        const clamped = Math.min(1, Math.max(-1, normalized));
+        relationPlaybackPhase = Math.asin(clamped);
+    }
+
+    function setRelationSigma(nextSigma, options = {}) {
+        relationSigma = Math.min(relationSigmaMax, Math.max(relationSigmaMin, nextSigma));
+        syncRelationSigmaControls();
+        renderRelationChart();
+        if (options.syncPhase) {
+            syncRelationPlaybackPhaseFromSigma();
+        }
+        if (options.stopPlayback) {
+            isRelationPlaying = false;
+            relationPlaybackLastTime = null;
+            updateRelationPlayPauseUI();
+        }
+    }
+
+    function stepRelationSigmaPlayback(timestamp) {
+        if (!isRelationPlaying) return;
+        if (relationPlaybackLastTime === null) {
+            relationPlaybackLastTime = timestamp;
+            return;
+        }
+        const deltaSeconds = Math.min(0.05, (timestamp - relationPlaybackLastTime) / 1000);
+        relationPlaybackLastTime = timestamp;
+        const period = relationPlaybackBasePeriod / relationPlaybackSpeed;
+        relationPlaybackPhase += (deltaSeconds * Math.PI * 2) / period;
+        const mid = (relationSigmaMin + relationSigmaMax) / 2;
+        const amplitude = (relationSigmaMax - relationSigmaMin) / 2;
+        const nextSigma = mid + amplitude * Math.sin(relationPlaybackPhase);
+        setRelationSigma(nextSigma);
     }
 
     function clampSimChartHeight(key, height) {
@@ -197,10 +293,14 @@
         const cWave = document.getElementById('waveCanvas');
         const cDensity = document.getElementById('densityCanvas');
         const cEnsemble = document.getElementById('ensembleCanvas');
+        const cDataRelation = document.getElementById('densityParticleRelationCanvas');
 
         renderWave(cWave.getContext('2d'), cWave.width, cWave.height);
         renderDensity(cDensity.getContext('2d'), cDensity.width, cDensity.height);
         renderEnsemble(cEnsemble.getContext('2d'), cEnsemble.width, cEnsemble.height);
+        if (cDataRelation) {
+            renderDensityParticleRelation(cDataRelation.getContext('2d'), cDataRelation.width, cDataRelation.height);
+        }
         updateActualTR();
     }
 
@@ -399,8 +499,8 @@
         absorbedRight = 0.0;
 
         // 波矢 k = sqrt(2mE) / hbar
-        const k0 = Math.sqrt(2 * mass * E) / hbar;
-        const x0 = -6.0; // 初始位置在势垒左侧，并且在吸收层之外
+        const k0 = getInitialPacketWaveNumber();
+        const x0 = getInitialPacketCenter(); // 初始位置在势垒左侧，并且在吸收层之外
         
         updatePotential();
         
@@ -796,6 +896,136 @@
         ctx.stroke();
     }
 
+    function buildVisibleProbabilityCdf() {
+        const cdf = new Float64Array(N);
+        let totalP = 0;
+
+        for (let i = N_damp; i < N - N_damp; i++) {
+            const p = (psiRe[i] * psiRe[i] + psiIm[i] * psiIm[i]) * dx;
+            totalP += p;
+            cdf[i] = totalP;
+        }
+
+        return { cdf, totalP };
+    }
+
+    function getInitialPacketProbabilityAtIndex(index, sigmaValue = relationSigma) {
+        const x = xMin + index * dx;
+        const x0 = getInitialPacketCenter();
+        const normalization = 1 / (Math.sqrt(Math.PI) * sigmaValue);
+        return normalization * Math.exp(-Math.pow((x - x0) / sigmaValue, 2));
+    }
+
+    function buildInitialPacketProbabilityCdf(sigmaValue = relationSigma) {
+        const cdf = new Float64Array(N);
+        let totalP = 0;
+
+        for (let i = N_damp; i < N - N_damp; i++) {
+            const p = getInitialPacketProbabilityAtIndex(i, sigmaValue) * dx;
+            totalP += p;
+            cdf[i] = totalP;
+        }
+
+        return { cdf, totalP };
+    }
+
+    function sampleVisibleParticleIndex(cdf, totalP) {
+        const target = Math.random() * totalP;
+        let left = N_damp;
+        let right = N - N_damp - 1;
+
+        while (left < right) {
+            const mid = (left + right) >> 1;
+            if (cdf[mid] < target) {
+                left = mid + 1;
+            } else {
+                right = mid;
+            }
+        }
+
+        return left;
+    }
+
+    function getRelationParticleFill() {
+        return isDark() ? 'rgba(125, 211, 252, 0.55)' : 'rgba(37, 99, 235, 0.38)';
+    }
+
+    function getParticleRegionFill(x) {
+        if (x > barrierCenter + d / 2) {
+            return 'rgba(72, 187, 120, 0.8)';
+        }
+        if (x < barrierCenter - d / 2) {
+            return 'rgba(49, 130, 206, 0.6)';
+        }
+        return 'rgba(237, 137, 54, 0.8)';
+    }
+
+    function renderDensityParticleRelation(ctx, width, height) {
+        ctx.clearRect(0, 0, width, height);
+
+        const yBase = height - 18;
+        const sigmaValue = relationSigma;
+        const { cdf, totalP } = buildInitialPacketProbabilityCdf(sigmaValue);
+        const maxProbabilityDensity = 1 / (Math.sqrt(Math.PI) * relationSigmaMin);
+        const scale = (height * 0.72) / maxProbabilityDensity;
+
+        ctx.fillStyle = isDark() ? '#000000' : '#f8fafc';
+        ctx.fillRect(0, 0, width, height);
+
+        ctx.strokeStyle = isDark() ? '#475569' : '#cbd5e1';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(0, yBase);
+        ctx.lineTo(width, yBase);
+        ctx.stroke();
+
+        ctx.fillStyle = isDark() ? 'rgba(255, 153, 102, 0.24)' : 'rgba(255, 102, 0, 0.22)';
+        ctx.beginPath();
+        ctx.moveTo(getCanvasX(xMin + N_damp * dx, width), yBase);
+        for (let i = N_damp; i < N - N_damp; i++) {
+            const cx = getCanvasX(xMin + i * dx, width);
+            const prob = getInitialPacketProbabilityAtIndex(i, sigmaValue);
+            const cy = yBase - prob * scale;
+            ctx.lineTo(cx, cy);
+        }
+        ctx.lineTo(getCanvasX(xMin + (N - N_damp - 1) * dx, width), yBase);
+        ctx.closePath();
+        ctx.fill();
+
+        if (totalP > 0) {
+            const particleCount = relationParticleCount;
+            const particleTop = 6;
+            const particleBottom = yBase - 2;
+            const particleFill = getRelationParticleFill();
+
+            for (let p = 0; p < particleCount; p++) {
+                const index = sampleVisibleParticleIndex(cdf, totalP);
+                const px = getCanvasX(xMin + index * dx, width);
+                const py = particleTop + Math.random() * Math.max(8, particleBottom - particleTop);
+
+                ctx.beginPath();
+                ctx.arc(px, py, 1.15, 0, 2 * Math.PI);
+                ctx.fillStyle = particleFill;
+                ctx.fill();
+            }
+        }
+
+        ctx.strokeStyle = isDark() ? 'rgb(255, 186, 143)' : 'rgb(255, 91, 46)';
+        ctx.lineWidth = 1.6;
+        ctx.beginPath();
+        for (let i = N_damp; i < N - N_damp; i++) {
+            const cx = getCanvasX(xMin + i * dx, width);
+            const prob = getInitialPacketProbabilityAtIndex(i, sigmaValue);
+            const cy = yBase - prob * scale;
+            if (i === N_damp) {
+                ctx.moveTo(cx, cy);
+            } else {
+                ctx.lineTo(cx, cy);
+            }
+        }
+        ctx.stroke();
+    }
+
     function renderEnsemble(ctx, width, height) {
         ctx.clearRect(0, 0, width, height);
 
@@ -810,13 +1040,7 @@
         ctx.fillRect(bLeft, 0, bRight - bLeft, height);
 
         // 计算当前可见区域内的总概率
-        let cdf = new Float64Array(N);
-        let totalP = 0;
-        for(let i = N_damp; i < N - N_damp; i++) {
-            const p = (psiRe[i]*psiRe[i] + psiIm[i]*psiIm[i]) * dx;
-            totalP += p;
-            cdf[i] = totalP;
-        }
+        const { cdf, totalP } = buildVisibleProbabilityCdf();
 
         if (totalP <= 0 || initialTotalProb <= 0) return;
 
@@ -831,34 +1055,14 @@
         ctx.fillStyle = 'rgba(49, 130, 206, 0.6)'; // 蓝色粒子
         
         for (let p = 0; p < currentParticleCount; p++) {
-            let target = Math.random() * totalP;
-            
-            // 二分查找
-            let left = N_damp;
-            let right = N - N_damp - 1;
-            while (left < right) {
-                let mid = (left + right) >> 1;
-                if (cdf[mid] < target) {
-                    left = mid + 1;
-                } else {
-                    right = mid;
-                }
-            }
-            
-            const px = getCanvasX(xMin + left * dx, width);
+            const left = sampleVisibleParticleIndex(cdf, totalP);
+            const x = xMin + left * dx;
+            const px = getCanvasX(x, width);
             const py = Math.random() * height; // Y轴随机散布，像云雾一样
 
             ctx.beginPath();
             ctx.arc(px, py, 1.2, 0, 2 * Math.PI);
-            
-            // 根据位置换颜色
-            if (xMin + left * dx > barrierCenter + d/2) {
-                ctx.fillStyle = 'rgba(72, 187, 120, 0.8)'; // 隧穿：绿色
-            } else if (xMin + left * dx < barrierCenter - d/2) {
-                ctx.fillStyle = 'rgba(49, 130, 206, 0.6)'; // 反射：蓝色
-            } else {
-                ctx.fillStyle = 'rgba(237, 137, 54, 0.8)'; // 势垒内：橙色
-            }
+            ctx.fillStyle = getParticleRegionFill(x);
             
             ctx.fill();
         }
@@ -1296,11 +1500,15 @@
         const cWave = document.getElementById('waveCanvas');
         const cDensity = document.getElementById('densityCanvas');
         const cEnsemble = document.getElementById('ensembleCanvas');
+        const cDataRelation = document.getElementById('densityParticleRelationCanvas');
         
         renderEnergy(cEnergy.getContext('2d'), cEnergy.width, cEnergy.height);
         renderWave(cWave.getContext('2d'), cWave.width, cWave.height);
         renderDensity(cDensity.getContext('2d'), cDensity.width, cDensity.height);
         renderEnsemble(cEnsemble.getContext('2d'), cEnsemble.width, cEnsemble.height);
+        if (cDataRelation) {
+            renderDensityParticleRelation(cDataRelation.getContext('2d'), cDataRelation.width, cDataRelation.height);
+        }
         
         if (currentTab === 'data') {
             renderStaticWave();
@@ -1311,6 +1519,7 @@
         
         updateActualTR();
     }
+
 
     function updatePlayPauseUI() {
         const btn = document.getElementById('playPauseBtn');
@@ -1335,7 +1544,7 @@
           paramTitle: "观察物质波的干涉",
           paramDesc: "设置极窄的波包(sigma=0.2)配合厚壁垒(d=0.9)，观察波包大部分被反射且在传播过程中迅速扩散——这正是位置-动量不确定关系的体现。",
 
-          ref: [{"name": "诺贝尔物理学奖官网 - de Broglie 获奖事实", "url": "https://www.nobelprize.org/prizes/physics/1929/de-broglie/facts/"}],
+          ref: [{"name": "百度百科 - 德布罗意", "url": "https://baike.baidu.com/item/德布罗意"}],
           action: { E: 1.0, V0: 3.0, d: 0.5, sigma: 0.8 },
         },
         {
@@ -1347,7 +1556,7 @@
           paramTitle: "势垒内的指数衰减",
           paramDesc: "设置极窄的波包(sigma=0.2)配合厚壁垒(d=0.9)，观察波包大部分被反射且在传播过程中迅速扩散——这正是位置-动量不确定关系的体现。",
 
-          ref: [{"name": "诺贝尔物理学奖官网 - Schrödinger 获奖事实", "url": "https://www.nobelprize.org/prizes/physics/1933/schrodinger/facts/"}],
+          ref: [{"name": "百度百科 - 薛定谔", "url": "https://baike.baidu.com/item/薛定谔"}],
           action: { E: 1.5, V0: 4.0, d: 0.5, sigma: 0.5 },
         },
         {
@@ -1370,7 +1579,7 @@
           paramTitle: "窄势垒下的动量扩散",
           paramDesc: "设置极窄的波包(sigma=0.2)配合厚壁垒(d=0.9)，观察波包大部分被反射且在传播过程中迅速扩散——这正是位置-动量不确定关系的体现。",
 
-          ref: [{"name": "诺贝尔物理学奖官网 - Heisenberg 获奖事实", "url": "https://www.nobelprize.org/prizes/physics/1932/heisenberg/facts/"}],
+          ref: [{"name": "百度百科 - 海森堡", "url": "https://baike.baidu.com/item/%E6%B5%B7%E6%A3%AE%E5%A0%A1"}],
           action: { E: 2.0, V0: 3.5, d: 0.9, sigma: 0.2 },
         },
         {
@@ -1404,7 +1613,7 @@
           details: "在此之前，人们不理解为什么原子核中的 α 粒子能跑出来：它们在核内的能量远小于核外巨大的库仑势垒高度。Gamow 运用量子力学证明，由于波函数的指数衰减，α 粒子有一条“能量隧道”可以逃逸。这成为了量子隧穿理论的第一次巨大成功。",
           paramTitle: "模拟厚重势垒中的衰减",
           paramDesc: "我们将势垒加宽并提高，模拟放射性元素核内的强库仑势垒，此时透射系数非常小，对应漫长的半衰期。",
-          ref: [{"name": "诺贝尔物理学奖官网 - Gamow 获奖事实", "url": "https://www.nobelprize.org/prizes/physics/1951/gamow/facts/"}],
+          ref: [{"name": "百度百科 - 伽莫夫", "url": "https://baike.baidu.com/item/伽莫夫"}],
           action: { E: 1.0, V0: 3.5, d: 1.2, sigma: 0.6 },
         },
         {
@@ -1415,7 +1624,7 @@
           details: "Born 提出波函数绝对值的平方 |Ψ|² 代表粒子在某处被找到的概率密度——这是量子力学的基本公设之一。这意味着，隧穿现象的本质不是粒子「挖洞」或「借能」越过势垒，而是粒子波函数在势垒另一侧存在非零概率的直接表现。此外，Born 的统计诠释还隐含了另一层深意：在势垒两侧出现的粒子是同一个粒子的不同可能位置，而非两个独立粒子。这一诠释为后来量子场论中「粒子产生与湮灭」的概念奠定了基础。",
           paramTitle: "查看概率密度视图",
           paramDesc: "加厚壁垒(d=0.8)，此时反射与透射并存，可同时观察入射波包、反射波包以及垒右侧的概率密度分布。",
-          ref: [{"name": "诺贝尔物理学奖官网 - Born 获奖事实", "url": "https://www.nobelprize.org/prizes/physics/1954/born/facts/"}],
+          ref: [{"name": "百度百科 - 玻恩", "url": "https://baike.baidu.com/item/玻恩"}],
           action: { E: 1.5, V0: 2.0, d: 0.8, sigma: 0.5 },
         },
         {
@@ -1427,7 +1636,7 @@
           paramTitle: "模拟极薄耗尽层",
           paramDesc: "将势垒宽度 d 减小到 0.15nm 左右，你会发现即使势垒很高，透射率 T 也极大提升！",
 
-          ref: [{"name": "诺贝尔物理学奖官网 - Esaki 获奖事实", "url": "https://www.nobelprize.org/prizes/physics/1973/esaki/facts/"}],
+          ref: [{"name": "百度百科 - 江崎玲於奈", "url": "https://baike.baidu.com/item/江崎玲於奈"}],
           action: { E: 1.5, V0: 3.5, d: 0.15, sigma: 0.5 },
         },
         {
@@ -1439,7 +1648,7 @@
           paramTitle: "微弱但非零的隧穿",
           paramDesc: "只要势垒够薄，即使能量 E 小于势垒 V0，波就会在另一端重新出现。",
 
-          ref: [{"name": "诺贝尔物理学奖官网 - Giaever 获奖事实", "url": "https://www.nobelprize.org/prizes/physics/1973/giaever/facts/"}],
+          ref: [{"name": "百度百科 - 贾埃弗", "url": "https://baike.baidu.com/item/贾埃弗"}],
           action: { E: 1.0, V0: 2.5, d: 0.5, sigma: 0.5 },
         },
         {
@@ -1451,7 +1660,7 @@
           paramTitle: "微弱但非零的隧穿",
           paramDesc: "适中的壁垒厚度(d=0.5)产生较弱但可检测的隧穿电流，这正是Giaever实验观察到的现象。",
 
-          ref: [{"name": "诺贝尔物理学奖官网 - Josephson 获奖事实", "url": "https://www.nobelprize.org/prizes/physics/1973/josephson/facts/"}],
+          ref: [{"name": "百度百科 - 约瑟夫森效应", "url": "https://baike.baidu.com/item/约瑟夫森效应"}],
           action: { E: 0.8, V0: 2.5, d: 0.7, sigma: 0.5 },
         },
         {
@@ -1475,7 +1684,7 @@
           paramTitle: "感受对距离的极端敏感",
           paramDesc: "你可以微调势垒宽度 d（模拟探针距离），观察理论透射率 T 是如何呈指数剧烈变化的。",
 
-          ref: [{"name": "诺贝尔物理学奖官网 - Binnig & Rohrer 获奖事实", "url": "https://www.nobelprize.org/prizes/physics/1986/binnig/facts/"}],
+          ref: [{"name": "百度百科 - 扫描隧道显微镜", "url": "https://baike.baidu.com/item/%E6%89%AB%E6%8F%8F%E9%99%A2%E9%81%93%E6%98%BE%E5%BE%AE%E9%95%AF"}],
           action: { E: 1.5, V0: 4.5, d: 0.4, sigma: 0.5 },
         },
         {
@@ -1622,9 +1831,11 @@
         btn.style.background = '#48bb78'; // 成功绿色
     };
 
-    function animationLoop() {
+    function animationLoop(timestamp) {
         if (isPlaying) {
-            if (currentFrame < MAX_FRAMES) {
+            playbackFrameAccumulator += playbackSpeed;
+            let didAdvance = false;
+            while (playbackFrameAccumulator >= 1 && currentFrame < MAX_FRAMES) {
                 if (currentFrame < stateHistory.length - 1) {
                     currentFrame++;
                     loadState(currentFrame);
@@ -1638,12 +1849,18 @@
                     document.getElementById('timeSlider').value = currentFrame;
                     document.getElementById('timeValueDisp').textContent = currentTime.toFixed(2);
                 }
+                playbackFrameAccumulator -= 1;
+                didAdvance = true;
+            }
+            if (didAdvance) {
                 renderAll();
-            } else {
+            } else if (currentFrame >= MAX_FRAMES) {
                 isPlaying = false;
+                playbackFrameAccumulator = 0;
                 updatePlayPauseUI();
             }
         }
+        stepRelationSigmaPlayback(timestamp);
         animationId = requestAnimationFrame(animationLoop);
     }
 
@@ -1678,6 +1895,9 @@
         if (!isPlaying) renderAll(); // 暂停状态下强制重绘以更新颜色
         if (currentTab === 'data') renderChart();
         if (currentTab === 'data') renderStaticWave();
+        if (currentTab === 'data') {
+            renderRelationChart();
+        }
         if (currentTab === 'theory') renderTheoryNumerov();
     });
 
@@ -1686,11 +1906,15 @@
             resetAndRender();
         }
         isPlaying = !isPlaying;
+        if (!isPlaying) {
+            playbackFrameAccumulator = 0;
+        }
         updatePlayPauseUI();
     });
 
     document.getElementById('resetBtn').addEventListener('click', function() {
         resetAndRender();
+        playbackFrameAccumulator = 0;
         if (!isPlaying) {
             isPlaying = true;
             updatePlayPauseUI();
@@ -1703,6 +1927,7 @@
             isPlaying = false;
             updatePlayPauseUI();
         }
+        playbackFrameAccumulator = 0;
         if (targetFrame > stateHistory.length - 1) {
             loadState(stateHistory.length - 1);
             while (stateHistory.length - 1 < targetFrame) {
@@ -1714,6 +1939,28 @@
         currentFrame = targetFrame;
         loadState(currentFrame);
         renderAll();
+    });
+
+    document.getElementById('playbackSpeedSlider').addEventListener('input', event => {
+        playbackSpeed = parseFloat(event.target.value);
+        syncPlaybackSpeedControls();
+    });
+
+    document.getElementById('relationSigmaSlider').addEventListener('input', event => {
+        setRelationSigma(parseFloat(event.target.value), { stopPlayback: true, syncPhase: true });
+    });
+
+    document.getElementById('relationSpeedSlider').addEventListener('input', event => {
+        relationPlaybackSpeed = parseFloat(event.target.value);
+        syncRelationSpeedControls();
+    });
+
+    document.getElementById('relationPlayPauseBtn').addEventListener('click', () => {
+        isRelationPlaying = !isRelationPlaying;
+        if (isRelationPlaying) {
+            relationPlaybackLastTime = null;
+        }
+        updateRelationPlayPauseUI();
     });
 
     function updateParams() {
@@ -1738,6 +1985,7 @@
         }
         if (currentTab === 'data') {
             renderChart();
+            renderRelationChart();
         }
     }
 
@@ -2225,6 +2473,11 @@
         applyAllSimChartHeights();
         initSimChartResizeControls();
         initSimulation();
+        syncPlaybackSpeedControls();
+        syncRelationSigmaControls();
+        syncRelationSpeedControls();
+        syncRelationPlaybackPhaseFromSigma();
+        updateRelationPlayPauseUI();
         updateTheoryNarrative();
         updateThemeToggleLabel();
         syncTabAccessibility(tabConfig[currentTab].buttonId);

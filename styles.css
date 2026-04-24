@@ -458,6 +458,32 @@
         body.dark-mode .time-label {
             color: #63b3ed;
         }
+        .time-speed-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-top: 12px;
+        }
+        .time-speed-label {
+            flex: 0 0 auto;
+            min-width: 92px;
+            font-size: 13px;
+            font-weight: 600;
+            color: #4a5568;
+        }
+        .time-speed-label span {
+            color: #3182ce;
+            font-variant-numeric: tabular-nums;
+        }
+        #playbackSpeedSlider {
+            flex: 1 1 auto;
+        }
+        body.dark-mode .time-speed-label {
+            color: #e2e8f0;
+        }
+        body.dark-mode .time-speed-label span {
+            color: #63b3ed;
+        }
         
         /* --- Tabs & Chart --- */
         .tabs {
@@ -2228,6 +2254,61 @@ button {
     color: var(--text-primary);
 }
 
+.relation-layout {
+    display: flex;
+    gap: 16px;
+    align-items: stretch;
+    margin-bottom: 15px;
+}
+
+.relation-chart-card {
+    flex: 1 1 auto;
+    margin-bottom: 0;
+}
+
+.relation-controls-panel {
+    width: 220px;
+    flex: 0 0 220px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 16px;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--panel-border);
+    background: linear-gradient(180deg, var(--panel-bg) 0%, var(--panel-muted) 100%);
+}
+
+.relation-controls-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.relation-control-label {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-secondary);
+}
+
+.relation-control-label span {
+    color: var(--accent);
+    font-variant-numeric: tabular-nums;
+}
+
+.relation-play-btn {
+    min-height: 42px;
+}
+
+.relation-controls-hint {
+    font-size: 12.5px;
+    line-height: 1.55;
+    color: var(--text-secondary);
+}
+
 .static-controls {
     background: linear-gradient(180deg, var(--accent-soft) 0%, rgba(255, 255, 255, 0) 100%), var(--panel-bg);
     border-color: color-mix(in srgb, var(--accent) 18%, var(--panel-border));
@@ -2406,6 +2487,15 @@ input:focus-visible,
 
     .sticky-theory-canvas {
         position: relative;
+    }
+
+    .relation-layout {
+        flex-direction: column;
+    }
+
+    .relation-controls-panel {
+        width: 100%;
+        flex-basis: auto;
     }
 }
 

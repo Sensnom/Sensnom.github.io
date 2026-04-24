@@ -104,6 +104,22 @@
                         <div class="canvas-label">理论透射率 T 关系曲线</div>
                         <canvas id="chartCanvas" width="800" height="280"></canvas>
                     </div>
+                    <div class="relation-layout">
+                        <div class="canvas-container sim-resizable relation-chart-card" data-resize-key="dataRelation">
+                            <div class="canvas-label sim-chart-label"><span>静态概率密度与粒子分布</span><button type="button" class="chart-height-reset" data-reset-key="dataRelation" aria-label="重置静态概率密度与粒子分布图高度">重置高度</button></div>
+                            <canvas id="densityParticleRelationCanvas" width="800" height="220"></canvas>
+                            <div class="chart-resize-handle" data-resize-key="dataRelation" title="上下拖动调整高度"></div>
+                        </div>
+                        <div class="relation-controls-panel" aria-label="静态概率密度与粒子分布控制">
+                            <div class="relation-controls-title">独立调节</div>
+                            <label class="relation-control-label" for="relationSigmaSlider">波包初始宽度 sigma <span id="relationSigmaValue">0.50</span></label>
+                            <input id="relationSigmaSlider" type="range" min="0.6" max="5.0" step="0.01" value="0.6" aria-label="静态概率密度与粒子分布图的波包初始宽度 sigma">
+                            <label class="relation-control-label" for="relationSpeedSlider">播放速度 <span id="relationSpeedValue">1.00x</span></label>
+                            <input id="relationSpeedSlider" type="range" min="0.5" max="2.5" step="0.05" value="1.0" aria-label="静态概率密度与粒子分布图的播放速度">
+                            <button id="relationPlayPauseBtn" type="button" class="relation-play-btn" aria-label="播放 sigma 自动扫描">播放</button>
+                            <div class="relation-controls-hint">拖动 sigma 可手动调节。播放后会按正弦节奏在 0.6 到 5.0 之间来回变化，两端会自然减速，概率密度会按归一化分布自动改变峰高。</div>
+                        </div>
+                    </div>
                 </div>
                 <div id="viewHistory" class="view-container">
                     <div class="history-layout">
@@ -277,11 +293,15 @@
                 </div>
             </div>
             
-            <div class="right-panel">
-                <div class="time-control">
-                    <div class="time-label">演化时间 t = <span id="timeValueDisp">0.00</span> fs</div>
-                    <input type="range" id="timeSlider" min="0" max="2000" step="1" value="0">
-                </div>
+                <div class="right-panel">
+                    <div class="time-control">
+                        <div class="time-label">演化时间 t = <span id="timeValueDisp">0.00</span> fs</div>
+                        <input type="range" id="timeSlider" min="0" max="2000" step="1" value="0">
+                        <div class="time-speed-row">
+                            <label class="time-speed-label" for="playbackSpeedSlider">速度 <span id="playbackSpeedValue">1.00x</span></label>
+                            <input type="range" id="playbackSpeedSlider" min="0.5" max="2.0" step="0.05" value="1.0" aria-label="实时演化播放速度">
+                        </div>
+                    </div>
                 <div class="btn-group">
                     <button id="playPauseBtn">暂停</button>
                     <button id="resetBtn">重置波包</button>
