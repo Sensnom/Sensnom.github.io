@@ -175,15 +175,6 @@
         return Math.sqrt(2 * mass * E) / hbar;
     }
 
-    // 复数运算辅助函数
-    function c_div(aRe, aIm, bRe, bIm) {
-        const denom = bRe * bRe + bIm * bIm;
-        return {
-            re: (aRe * bRe + aIm * bIm) / denom,
-            im: (aIm * bRe - aRe * bIm) / denom
-        };
-    }
-
     function syncParamDisplays() {
         document.getElementById('v0Slider').value = V0;
         document.getElementById('dSlider').value = d;
@@ -484,14 +475,7 @@
     }
 
     function updatePotential() {
-        for (let i = 0; i < N; i++) {
-            const x = xMin + i * dx;
-            if (x >= barrierCenter - d / 2 && x <= barrierCenter + d / 2) {
-                V[i] = V0;
-            } else {
-                V[i] = 0;
-            }
-        }
+        V = QuantumPhysics.buildPotential({ N, xMin, dx, barrierCenter, d, V0 });
     }
 
     function initSimulation() {
@@ -503,18 +487,10 @@
         const x0 = getInitialPacketCenter(); // 初始位置在势垒左侧，并且在吸收层之外
         
         updatePotential();
+        const packet = QuantumPhysics.createGaussianPacket({ N, xMin, dx, x0, k0, sigma });
+        psiRe = packet.psiRe;
+        psiIm = packet.psiIm;
         
-        for (let i = 0; i < N; i++) {
-            const x = xMin + i * dx;
-            
-            // 波包初始化 (根据 PhET 的无归一化高斯波包)
-            // 严谨不作 L2 归一化，强制振幅最大值为 1.0，从而完美适配界面缩放比例
-            const env = Math.exp(-Math.pow((x - x0) / sigma, 2) / 2.0);
-            const phase = k0 * (x - x0);
-            psiRe[i] = env * Math.cos(phase);
-            psiIm[i] = env * Math.sin(phase);
-        }
-
         // 计算初始时刻的全局总概率（波包初始的质量）
         initialTotalProb = 0;
         for (let i = 0; i < N; i++) {
@@ -557,154 +533,39 @@
 
     // Crank-Nicolson 算法实现 (更严谨的物理单位版)
     function solveCrankNicolson() {
-        // 薛定谔方程: i*hbar dPsi/dt = (-hbar^2/(2m) d^2/dx^2 + V) Psi
-        // 离散化后的 H 操作符主对角线和副对角线:
-        // H * psi_old_i = (-hbar^2/(2m*dx^2)) * (psi_old_{i-1} - 2psi_old_i + psi_old_{i+1}) + V[i]*psi_old_i
-        
-        // 动能前缀常数: rx = hbar / (4 * mass * dx^2)
-        const rx = hbar / (4 * mass * dx * dx); 
-        
-        // 构造右侧向量 b
-        let bRe = new Float64Array(N);
-        let bIm = new Float64Array(N);
-        
-        for (let i = 1; i < N - 1; i++) {
-            // (H * psi_old)[i]
-            // 注意: -0.5 * (hbar^2/mass) d^2/dx^2 已经除以了 hbar，我们只需要计算 (H / hbar)
-            const kE_coef = -hbar / (2 * mass * dx * dx);
-            const H_psiRe = kE_coef * (psiRe[i-1] - 2*psiRe[i] + psiRe[i+1]) + (V[i] / hbar) * psiRe[i];
-            const H_psiIm = kE_coef * (psiIm[i-1] - 2*psiIm[i] + psiIm[i+1]) + (V[i] / hbar) * psiIm[i];
-            
-            // b = psi_old - i * (dt/2) * (H/hbar) * psi_old
-            bRe[i] = psiRe[i] + (dt / 2) * H_psiIm;
-            bIm[i] = psiIm[i] - (dt / 2) * H_psiRe;
-        }
-        
-        // 边界条件: psi = 0
-        bRe[0] = 0; bIm[0] = 0;
-        bRe[N-1] = 0; bIm[N-1] = 0;
-        
-        // Thomas 追赶法解三对角矩阵 A * psi_new = b
-        // A 的主对角线 D[i] = 1 + i * dt/2 * (hbar/(mass*dx^2) + V[i]/hbar)
-        // A 的上下副对角线 U[i] = L[i] = -i * dt/2 * (hbar/(2*mass*dx^2)) = -i * rx * dt
-        const rx_dt = rx * dt;
-        
-        // 预处理边界
-        cRe[0] = 0; cIm[0] = 0;
-        dRe[0] = 0; dIm[0] = 0;
-        
-        // 正向追
-        for (let i = 1; i < N - 1; i++) {
-            // D[i]
-            const DRe = 1.0;
-            const DIm = (dt / 2) * (hbar / (mass * dx * dx) + V[i] / hbar);
-            
-            // U[i] = -i * rx_dt
-            const URe = 0;
-            const UIm = -rx_dt;
-            
-            // L[i] = -i * rx_dt
-            const LRe = 0;
-            const LIm = -rx_dt;
-            
-            // L * c[i-1]
-            const LcRe = LRe * cRe[i-1] - LIm * cIm[i-1];
-            const LcIm = LRe * cIm[i-1] + LIm * cRe[i-1];
-            
-            const denomRe = DRe - LcRe;
-            const denomIm = DIm - LcIm;
-            
-            // c[i] = U[i] / denom
-            const c_res = c_div(URe, UIm, denomRe, denomIm);
-            cRe[i] = c_res.re;
-            cIm[i] = c_res.im;
-            
-            // b[i] - L[i] * d[i-1]
-            const LdRe = LRe * dRe[i-1] - LIm * dIm[i-1];
-            const LdIm = LRe * dIm[i-1] + LIm * dRe[i-1];
-            
-            const numRe = bRe[i] - LdRe;
-            const numIm = bIm[i] - LdIm;
-            
-            // d[i] = num / denom
-            const d_res = c_div(numRe, numIm, denomRe, denomIm);
-            dRe[i] = d_res.re;
-            dIm[i] = d_res.im;
-        }
-        
-        // 反向赶
-        psiRe[N-1] = 0;
-        psiIm[N-1] = 0;
-        for (let i = N - 2; i >= 1; i--) {
-            // psi[i] = d[i] - c[i] * psi[i+1]
-            const cpsiRe = cRe[i] * psiRe[i+1] - cIm[i] * psiIm[i+1];
-            const cpsiIm = cRe[i] * psiIm[i+1] + cIm[i] * psiRe[i+1];
-            
-            psiRe[i] = dRe[i] - cpsiRe;
-            psiIm[i] = dIm[i] - cpsiIm;
-        }
-        psiRe[0] = 0;
-        psiIm[0] = 0;
-        
-        // --- 严谨的 PhET 阶梯吸收边界层 (Damping Sponge) ---
-        // PhET 原始阻尼系数数组 (19 个区块)
-        const dampCoefs = [
-            0.001, 0.005, 0.01, 0.025, 0.05, 0.075, 0.1, 0.15, 0.3, 0.5,
-            0.7, 0.85, 0.9, 0.925, 0.95, 0.975, 0.99, 0.995, 0.999
-        ];
-        
-        // 左边界阻尼
-        for (let i = 0; i < dampCoefs.length * 10; i++) {
-            if (i >= N / 2) break;
-            const blockIndex = Math.floor(i / 10);
-            const factor = dampCoefs[blockIndex];
-            
-            const prob_before = (psiRe[i]*psiRe[i] + psiIm[i]*psiIm[i]) * dx;
-            psiRe[i] *= factor;
-            psiIm[i] *= factor;
-            const prob_after = (psiRe[i]*psiRe[i] + psiIm[i]*psiIm[i]) * dx;
-            absorbedLeft += (prob_before - prob_after);
-        }
-        
-        // 右边界阻尼
-        for (let i = 0; i < dampCoefs.length * 10; i++) {
-            if (N - 1 - i <= N / 2) break;
-            const blockIndex = Math.floor(i / 10);
-            const factor = dampCoefs[blockIndex];
-            
-            const idx = N - 1 - i;
-            const prob_before = (psiRe[idx]*psiRe[idx] + psiIm[idx]*psiIm[idx]) * dx;
-            psiRe[idx] *= factor;
-            psiIm[idx] *= factor;
-            const prob_after = (psiRe[idx]*psiRe[idx] + psiIm[idx]*psiIm[idx]) * dx;
-            absorbedRight += (prob_before - prob_after);
-        }
+        const absorption = {
+            left: absorbedLeft,
+            right: absorbedRight
+        };
+
+        QuantumPhysics.stepCrankNicolson({
+            psiRe,
+            psiIm,
+            V,
+            dt,
+            dx,
+            mass,
+            hbar,
+            work: { cRe, cIm, dRe, dIm },
+            absorption,
+            dampCoefs: [
+                0.001, 0.005, 0.01, 0.025, 0.05, 0.075, 0.1, 0.15, 0.3, 0.5,
+                0.7, 0.85, 0.9, 0.925, 0.95, 0.975, 0.99, 0.995, 0.999
+            ]
+        });
+
+        absorbedLeft = absorption.left;
+        absorbedRight = absorption.right;
     }
 
     function calculateTR(e_val, v0_val, d_val) {
-        if (Math.abs(e_val - v0_val) < 1e-6) {
-            // 临界情况: E = V0 (通过洛必达法则求极限)
-            const term = (mass * v0_val * d_val * d_val) / (2 * hbar * hbar);
-            const T = 1.0 / (1.0 + term);
-            return { T, R: 1 - T };
-        } else if (e_val < v0_val) {
-            // 隧穿情况: E < V0
-            const k1 = Math.sqrt(2 * mass * e_val) / hbar;
-            const k2 = Math.sqrt(2 * mass * (v0_val - e_val)) / hbar;
-            const sinh_kd = Math.sinh(k2 * d_val);
-            const denom = 4 * k1 * k1 * k2 * k2 + (k1 * k1 + k2 * k2) * sinh_kd * sinh_kd;
-            const T = 4 * k1 * k1 * k2 * k2 / denom;
-            return { T, R: 1 - T };
-        } else {
-            // 势垒上方散射情况: E > V0 (量子力学中仍有反射!)
-            const k1 = Math.sqrt(2 * mass * e_val) / hbar;
-            const k2 = Math.sqrt(2 * mass * (e_val - v0_val)) / hbar;
-            const sin_kd = Math.sin(k2 * d_val);
-            // 公式: T = 1 / (1 + (V0^2 / (4E(E-V0))) * sin^2(k2 d))
-            const term = (v0_val * v0_val) / (4 * e_val * (e_val - v0_val));
-            const T = 1.0 / (1.0 + term * sin_kd * sin_kd);
-            return { T, R: 1 - T };
-        }
+        return QuantumPhysics.calculateRectBarrierTR({
+            E: e_val,
+            V0: v0_val,
+            d: d_val,
+            mass,
+            hbar
+        });
     }
 
     function computeTheoreticalTR() {
@@ -718,15 +579,18 @@
     }
 
     function updateActualTR() {
-        let pRightVisible = 0.0;
-        const bRightIndex = Math.ceil((barrierCenter + d / 2 - xMin) / dx);
-        
-        for (let i = bRightIndex; i < N; i++) {
-            pRightVisible += (psiRe[i] * psiRe[i] + psiIm[i] * psiIm[i]) * dx;
-        }
-        
-        // 实际透射 = 仍在画布右侧的波包 + 已经跑出画面右侧被海绵吸收掉的波包
-        let actualT = (pRightVisible + absorbedRight) / initialTotalProb;
+        let actualT = QuantumPhysics.measureProbabilities({
+            psiRe,
+            psiIm,
+            xMin,
+            dx,
+            barrierCenter,
+            d,
+            N_damp,
+            absorbedLeft,
+            absorbedRight,
+            initialTotalProb
+        }).actualT;
         
         if (actualT < 0) actualT = 0;
         if (actualT > 1) actualT = 1;
@@ -1357,9 +1221,9 @@
         if (mode === 'total') {
             descEl.textContent = "驻波干涉：导致实虚部振幅不同，包络呈波浪起伏";
         } else if (mode === 'incident') {
-            descEl.textContent = "右行波：注意边界的波形断层。这说明“单个行波”无法满足薛定谔方程的连续性，必须产生反射波来填补断层。";
+            descEl.textContent = "右行波：单个右行平面波在自由区本身是解，但它单独不能满足整道势垒的边界匹配，所以全局散射解必须再带上反射项。";
         } else if (mode === 'reflected') {
-            descEl.textContent = "左行波：它像“粘合剂”，其在边界处的值精确等于右行波断层的落差，两者叠加才恢复平滑的总波。";
+            descEl.textContent = "左行波：它不是额外加出来的装饰，而是边界连续条件逼出来的那部分。和入射波叠加后，才得到满足整道势垒匹配的总波函数。";
         }
         
         const psiR = new Float64Array(N_stat);
